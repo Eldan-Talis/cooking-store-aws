@@ -1,0 +1,7 @@
+.recipe-grid {
+    display: grid;
+    /* try 180 px or 200 px first, then tweak */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  

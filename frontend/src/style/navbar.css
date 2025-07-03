@@ -1,0 +1,61 @@
+.navbar {
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 0.75rem 2rem;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    /* no justify-content here */
+  }
+  
+  /* 1) Brand on the far left, with a divider */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #222;
+    text-decoration: none;
+  
+    /* divider after brand */
+    border-right: 1px solid #ddd;
+    padding-right: 1rem;
+    margin-right: 1rem;
+  }
+  
+  .brand-icon {
+    width: 32px;
+    height: auto;
+  }
+  
+  /* 2) All links in one group, pushed right */
+  .nav-links {
+    display: flex;
+    flex: 1;                        /* take all leftover space */
+    justify-content: space-between; /* spread items equally */
+    list-style: none;
+    align-items: center;
+    margin-left: 300px; 
+    margin-right: 300px;                     /* remove any left-auto or gaps */
+    padding: 0;
+  }
+  
+  /* 3) Link styles (inherits for all) */
+  .nav-links li a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #222;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .nav-links li a:hover,
+  .nav-links li a.active {
+    color: #0070f3;
+  }
+  
