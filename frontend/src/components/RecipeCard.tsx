@@ -2,6 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Recipe } from "../API/types";
 import "../style/recipeCard.css";
 
+import {
+  Container,
+  Typography,
+  CircularProgress,
+  Alert,
+  Grid,
+  Box,
+} from "@mui/material";
+
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
     return (
       <div className="card">

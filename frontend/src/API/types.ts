@@ -17,3 +17,9 @@ export interface Recipe {
     GlutenFree?: string;
   }
   
+
+export interface Category{
+  Id: string;
+  Name: string;
+  ImageUrl: string;
+}
