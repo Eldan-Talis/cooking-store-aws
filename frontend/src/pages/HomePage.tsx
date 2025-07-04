@@ -1,22 +1,52 @@
-// src/pages/HomePage.tsx
 import React, { useEffect, useState } from "react";
 import { getRecipes } from "../API/getRecipes";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
-import { getCategories } from "../API/getCategories.js";
+import { getCategories } from "../API/getCategories";
+import CategorySelectMUI from "../components/CategorySlide";
 
-import "../style/RecipeCard.css";
-import "../style/RecipeGrid.css";
-import "../style/Page.css";
-
-import CategorySelectMUI from "../components/CategorySlide.jsx";
+import { Box, CircularProgress, Button, Typography } from "@mui/material";
 
 export default function HomePage() {
+
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const [lastKey, setLastKey] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+
+  const loadMore = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+
+    try {
+      const data = await getRecipes( lastKey ?? undefined);
+      setRecipes((prev) => [...prev, ...data.items]);
+      setLastKey(data.lastKey ?? null);
+      setHasMore(Boolean(data.lastKey));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMore();
+  }, []);
+
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch((err) => setError(err.message));
+  }, []);
+
+  const filteredRecipes = selectedCategory
+    ? recipes.filter((r) => r.CategoryId === selectedCategory)
+    : recipes;
 
   const countsByCategory = recipes.reduce((acc, recipe) => {
     const category = recipe.CategoryId || "all";
@@ -24,27 +54,12 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, number>);
 
-  useEffect(() => {
-    getRecipes()
-      .then(setRecipes)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    getCategories()
-      .then(setCategories)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-
-  }, []);
-
-  if (loading) return <p style={{ textAlign: "center" }}>Loading…</p>;
-  if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
-
   return (
-    <main className="page">
-      <h1 style={{ textAlign: "center" }}>Recipes</h1>
+    <Box sx={{ padding: 4 }}>
+      <Typography variant="h4" align="center" gutterBottom>
+        Recipes
+      </Typography>
+
       <CategorySelectMUI
         categories={categories}
         selectedCategoryId={selectedCategory}
@@ -52,16 +67,37 @@ export default function HomePage() {
         categoryCounts={countsByCategory}
       />
 
-
-      {recipes.length === 0 ? (
-        <p>No recipes yet.</p>
-      ) : (
-        <div className="recipe-grid">
-          {recipes.map((r) => (
-            <RecipeCard key={r.Id} recipe={r} />
-          ))}
-        </div>
+      {error && (
+        <Typography color="error" align="center" mt={2}>
+          {error}
+        </Typography>
       )}
-    </main>
+
+      {filteredRecipes.length === 0 ? (
+        <Typography align="center" mt={4}>No recipes yet.</Typography>
+      ) : (
+        <Box
+          display="flex"
+          flexWrap="wrap"
+          justifyContent="center"
+          gap={2}
+          mt={3}
+        >
+          {filteredRecipes.map((r) => (
+            <Box key={r.Id}>
+              <RecipeCard recipe={r} />
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {hasMore && !selectedCategory && (
+        <Box textAlign="center" mt={4}>
+          <Button variant="outlined" onClick={loadMore} disabled={loading}>
+            {loading ? "Loading..." : "Load More"}
+          </Button>
+        </Box>
+      )}
+    </Box>
   );
 }

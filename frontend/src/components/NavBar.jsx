@@ -1,33 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { AppBar, Toolbar, Typography, Button, Avatar, IconButton, Box } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import MenuIcon from '@mui/icons-material/Menu';
 import ChefHat from "../assets/chef.png";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) {
-      setUser(storedUser);
-    }
-  }, []);
-
-  const login = () => {
-    // Add your real login logic here
-    const fakeUser = {
-      username: "JohnDoe",
-      profileImage: "/images/default-avatar.jpg"
-    };
-    localStorage.setItem("user", JSON.stringify(fakeUser));
-    setUser(fakeUser);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-  };
+  const { user, login, logout } = useAuth();
 
   return (
     <AppBar position="static" color="default" elevation={2}>
@@ -60,9 +39,9 @@ export default function Navbar() {
                 <Typography variant="body1" fontWeight="bold" mr={1}>
                   {user.username}
                 </Typography>
-                <Avatar alt="Profile" src={user.profileImage} />
+                <Avatar alt={user.username} src={user.profileImage} />
               </Button>
-              <Button onClick={handleLogout} color="error" variant="outlined">
+              <Button onClick={logout} color="error" variant="outlined">
                 Logout
               </Button>
             </>
