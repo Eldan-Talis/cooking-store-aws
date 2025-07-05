@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
         // שליחת הטוקן ל־Lambda
         try {
-          const lambdaResponse = await fetch("https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/get-user", {
+          const lambdaResponse = await fetch("https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/fetch-user", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

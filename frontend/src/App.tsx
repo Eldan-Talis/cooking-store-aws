@@ -9,16 +9,14 @@ import { AuthProvider } from "./context/AuthContext"; // הנתיב בהתאם �
 
 export default function App() {
   return (
-    <>
     <AuthProvider>
       <Navbar />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
-        <Route path="/recipes" element={<RecipesPage />} />
-        <Route path="/chat" element={<ChatBotPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/favorites" element={<FavoritesPage />} />
+      <Route path="/recipes" element={<RecipesPage />} />
+      <Route path="/chat" element={<ChatBotPage />} />
       </Routes>
     </AuthProvider>
-    </>
   );
 }

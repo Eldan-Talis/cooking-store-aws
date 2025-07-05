@@ -21,7 +21,10 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 interface RecipeCardProps {
   recipe: Recipe;
+  onFavorite: (recipeId: string) => void; // ✅ required
+  isFavorite: boolean;                    // ✅ required
 }
+
 
 interface ExpandMoreProps {
   expand: boolean;

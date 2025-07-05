@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { getRecipes } from "../API/getRecipes";
+import { getCategories } from "../API/getCategories";
+import { getFavorites, addFavorite } from "../API/favorites";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
-import { getCategories } from "../API/getCategories";
 import CategorySelectMUI from "../components/CategorySlide";
 
-import { Box, CircularProgress, Button, Typography } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Button,
+  Typography,
+} from "@mui/material";
 
 export default function HomePage() {
-
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,13 +22,14 @@ export default function HomePage() {
 
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   const loadMore = async () => {
     if (loading || !hasMore) return;
     setLoading(true);
 
     try {
-      const data = await getRecipes( lastKey ?? undefined);
+      const data = await getRecipes(lastKey ?? undefined);
       setRecipes((prev) => [...prev, ...data.items]);
       setLastKey(data.lastKey ?? null);
       setHasMore(Boolean(data.lastKey));
@@ -43,6 +49,21 @@ export default function HomePage() {
       .then(setCategories)
       .catch((err) => setError(err.message));
   }, []);
+
+  useEffect(() => {
+    getFavorites()
+      .then(setFavorites)
+      .catch((err) => console.error("Failed to fetch favorites:", err));
+  }, []);
+
+  const handleFavorite = async (recipeId: string) => {
+    try {
+      await addFavorite(recipeId);
+      setFavorites((prev) => [...prev, recipeId]);
+    } catch (err: any) {
+      console.error("Error adding to favorites:", err.message);
+    }
+  };
 
   const filteredRecipes = selectedCategory
     ? recipes.filter((r) => r.CategoryId === selectedCategory)
@@ -85,7 +106,11 @@ export default function HomePage() {
         >
           {filteredRecipes.map((r) => (
             <Box key={r.Id}>
-              <RecipeCard recipe={r} />
+              <RecipeCard
+                recipe={r}
+                onFavorite={handleFavorite}
+                isFavorite={favorites.includes(r.Id)}
+              />
             </Box>
           ))}
         </Box>
