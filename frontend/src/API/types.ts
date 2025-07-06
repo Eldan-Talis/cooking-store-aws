@@ -15,7 +15,11 @@ export interface Recipe {
     Vegetarian?: string;
     Vegan?: string;
     GlutenFree?: string;
+    AverageRating?: number;
+    RatingCount?: number;
+    MyRating?: number;
   }
+  
   
 
 export interface Category{

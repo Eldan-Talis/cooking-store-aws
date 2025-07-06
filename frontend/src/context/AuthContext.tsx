@@ -1,26 +1,50 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { jwtDecode } from "jwt-decode";
 import cognitoConfig from "./CognitoConfig";
 
-const AuthContext = createContext({
-  user: null,
-  login: () => { },
-  logout: () => { }
-});
+// 👇 1️⃣ Define the user shape
+export interface AuthUser {
+  idToken: string;
+  sub: string; // Cognito unique user ID
+  email: string;
+  username: string;
+}
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+// 👇 2️⃣ Define the context type
+interface AuthContextType {
+  user: AuthUser | null;
+  login: () => void;
+  logout: () => void;
+}
+
+// 👇 3️⃣ Create the context with proper type
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// 👇 4️⃣ Type the props for AuthProvider
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+// 👇 5️⃣ AuthProvider component
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    // אם אין קוד – ננסה מה-localStorage
+    // If no code, try to load token from localStorage
     if (!code) {
       const token = localStorage.getItem("idToken");
       if (token) {
         try {
-          const decoded = jwtDecode(token);
+          const decoded: any = jwtDecode(token);
           setUser({
             idToken: token,
             sub: decoded.sub,
@@ -34,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // קוד Cognito קיים → נחליף בטוקן
+    // If we have a new Cognito code, exchange it for tokens
     const usedCode = sessionStorage.getItem("usedCognitoCode");
     if (usedCode === code) return;
     sessionStorage.setItem("usedCognitoCode", code);
@@ -46,40 +70,36 @@ export const AuthProvider = ({ children }) => {
         `grant_type=authorization_code` +
         `&client_id=${cognitoConfig.clientId}` +
         `&code=${code}` +
-        `&redirect_uri=${encodeURIComponent(cognitoConfig.redirectUri)}`
+        `&redirect_uri=${encodeURIComponent(cognitoConfig.redirectUri)}`,
     })
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(async (data) => {
         if (!data.id_token) {
           console.error("No id_token returned from Cognito:", data);
           return;
         }
 
-        const decoded = jwtDecode(data.id_token);
+        const decoded: any = jwtDecode(data.id_token);
         localStorage.setItem("idToken", data.id_token);
 
-        // שליחת הטוקן ל־Lambda
+        // Optionally: Call your Lambda if needed
         try {
-          const lambdaResponse = await fetch("https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/fetch-user", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${data.id_token}`
-            },
-            body: JSON.stringify({ source: "cognito-login" })
-          });
-
-          if (!lambdaResponse.ok) {
-            console.warn("Lambda error, using token only");
-            console.warn("⚠️ Lambda error:", status, text); // 👈 זה יגיד לנו למה!
-
-          }
-
+          await fetch(
+            "https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/fetch-user",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.id_token}`,
+              },
+              body: JSON.stringify({ source: "cognito-login" }),
+            }
+          );
         } catch (err) {
           console.error("Lambda call failed:", err);
         }
 
-        // הגדרת המשתמש
+        // Set user
         setUser({
           idToken: data.id_token,
           sub: decoded.sub,
@@ -87,6 +107,7 @@ export const AuthProvider = ({ children }) => {
           username: decoded.email?.split("@")[0] || "User",
         });
 
+        // Clean URL
         window.history.replaceState({}, "", "/");
       })
       .catch((err) => {
@@ -117,4 +138,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// 👇 6️⃣ useAuth hook with safe context type
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
