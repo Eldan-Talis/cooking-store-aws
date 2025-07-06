@@ -8,7 +8,6 @@ import CategorySelectMUI from "../components/CategorySlide";
 
 import {
   Box,
-  CircularProgress,
   Button,
   Typography,
 } from "@mui/material";
@@ -22,7 +21,7 @@ export default function HomePage() {
 
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const loadMore = async () => {
     if (loading || !hasMore) return;
@@ -34,7 +33,7 @@ export default function HomePage() {
       setLastKey(data.lastKey ?? null);
       setHasMore(Boolean(data.lastKey));
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to load recipes.");
     } finally {
       setLoading(false);
     }
@@ -47,21 +46,45 @@ export default function HomePage() {
   useEffect(() => {
     getCategories()
       .then(setCategories)
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message || "Failed to load categories."));
   }, []);
 
   useEffect(() => {
-    getFavorites()
-      .then(setFavorites)
-      .catch((err) => console.error("Failed to fetch favorites:", err));
-  }, []);
+  const fetchFavorites = async () => {
+    const token = localStorage.getItem("idToken");
+    if (!token) return; // Skip if not logged in
+
+    try {
+      const result = await getFavorites(); // full recipe objects
+      const ids = result
+        .map((item: any) => item.Id)
+        .filter((id: any) => typeof id === "string" || typeof id === "number")
+        .map(String); // ensure all IDs are strings
+
+      setFavorites(new Set(ids));
+    } catch (err) {
+      console.error("Failed to fetch favorites:", err);
+    }
+  };
+
+  fetchFavorites();
+}, []);
+
 
   const handleFavorite = async (recipeId: string) => {
+    if (favorites.has(recipeId)) return; // Already favorited
+
+    setFavorites((prev) => new Set(prev).add(recipeId)); // Optimistic update
+
     try {
       await addFavorite(recipeId);
-      setFavorites((prev) => [...prev, recipeId]);
     } catch (err: any) {
       console.error("Error adding to favorites:", err.message);
+      setFavorites((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(recipeId);
+        return newSet;
+      });
     }
   };
 
@@ -109,7 +132,7 @@ export default function HomePage() {
               <RecipeCard
                 recipe={r}
                 onFavorite={handleFavorite}
-                isFavorite={favorites.includes(r.Id)}
+                isFavorite={favorites.has(r.Id)}
               />
             </Box>
           ))}

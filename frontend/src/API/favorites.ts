@@ -7,7 +7,7 @@ export async function addFavorite(recipeId: string) {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify({ recipe_id: recipeId }),
+    body: JSON.stringify({ RecipeId: recipeId }),
   });
 
   if (!res.ok) {
