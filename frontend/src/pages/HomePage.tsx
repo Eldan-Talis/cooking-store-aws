@@ -24,20 +24,22 @@ export default function HomePage() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const loadMore = async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
+  if (loading || !hasMore) return;
+  setLoading(true);
 
-    try {
-      const data = await getRecipes(lastKey ?? undefined);
-      setRecipes((prev) => [...prev, ...data.items]);
-      setLastKey(data.lastKey ?? null);
-      setHasMore(Boolean(data.lastKey));
-    } catch (err: any) {
-      setError(err.message || "Failed to load recipes.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const data = await getRecipes(lastKey ?? undefined);
+    console.log("✅ data.items length:", data);
+    setRecipes((prev) => [...prev, ...data.items]);
+    setLastKey(data.lastKey ?? null);
+    setHasMore(Boolean(data.lastKey));
+  } catch (err: any) {
+    setError(err.message || "Failed to load recipes.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     loadMore();
