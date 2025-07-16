@@ -37,14 +37,17 @@ export const AuthProvider = ({ children }) => {
     // קוד Cognito קיים → נחליף בטוקן
     const usedCode = sessionStorage.getItem("usedCognitoCode");
     if (usedCode === code) return;
-    sessionStorage.setItem("usedCognitoCode", code);
-
+      sessionStorage.setItem("usedCognitoCode", code);
+    const credentials = `${cognitoConfig.clientId}:${cognitoConfig.clientSecret}`;
+    const encodedCredentials = btoa(credentials); // base64 encode  
     fetch(`https://${cognitoConfig.domain}/oauth2/token`, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${encodedCredentials}`
+       },
       body:
         `grant_type=authorization_code` +
-        `&client_id=${cognitoConfig.clientId}` +
+        `&client_id=${cognitoConfig.clientId}` + 
         `&code=${code}` +
         `&redirect_uri=${encodeURIComponent(cognitoConfig.redirectUri)}`
     })
@@ -98,10 +101,10 @@ export const AuthProvider = ({ children }) => {
     const { domain, clientId, redirectUri, responseType, scope } = cognitoConfig;
     const authUrl =
       `https://${domain}/login?` +
-      `response_type=${encodeURIComponent(responseType)}` +
-      `&client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&scope=${encodeURIComponent(scope)}`;
+      `client_id=${encodeURIComponent(clientId)}` +
+      `&response_type=${encodeURIComponent(responseType)}` +
+      `&scope=${scope}`+
+      `&redirect_uri=${encodeURIComponent(redirectUri)}`;
     window.location.href = authUrl;
   };
 

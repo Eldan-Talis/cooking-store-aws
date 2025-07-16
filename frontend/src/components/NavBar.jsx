@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AppBar, Toolbar, Typography, Button, Avatar, IconButton, Box } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -7,6 +7,11 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, login, logout } = useAuth();
+
+  // 🔍 Debug: See what the user context actually contains
+  useEffect(() => {
+    console.log("Navbar user:", user);
+  }, [user]);
 
   return (
     <AppBar position="static" color="default" elevation={2}>
@@ -19,7 +24,7 @@ export default function Navbar() {
           </Typography>
         </Box>
 
-        {/* Center: Nav links */}
+        {/* Center: Navigation Links */}
         <Box display="flex" gap={2}>
           <Button component={RouterLink} to="/" color="inherit">Home</Button>
           <Button component={RouterLink} to="/favorites" color="inherit">Favorites</Button>
@@ -27,25 +32,27 @@ export default function Navbar() {
           <Button component={RouterLink} to="/chat" color="inherit">Chat Bot</Button>
         </Box>
 
-        {/* Right: User info or login */}
+        {/* Right: Auth buttons */}
         <Box display="flex" alignItems="center" gap={2}>
-          {!user ? (
-            <Button onClick={login} color="primary" variant="outlined">
-              Login
-            </Button>
-          ) : (
+          {user && user.username ? (
             <>
               <Button component={RouterLink} to="/profile" color="inherit" sx={{ textTransform: "none" }}>
                 <Typography variant="body1" fontWeight="bold" mr={1}>
                   {user.username}
                 </Typography>
-                <Avatar alt={user.username} src={user.profileImage} />
+                <Avatar alt={user.username} src={user.profileImage || undefined} />
               </Button>
               <Button onClick={logout} color="error" variant="outlined">
                 Logout
               </Button>
             </>
+          ) : (
+            <Button onClick={login} color="primary" variant="outlined">
+              Login
+            </Button>
           )}
+
+          {/* Optional mobile menu icon */}
           <IconButton color="inherit" sx={{ display: { sm: "none" } }}>
             <MenuIcon />
           </IconButton>
