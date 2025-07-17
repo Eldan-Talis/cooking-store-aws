@@ -29,7 +29,6 @@ export default function HomePage() {
 
   try {
     const data = await getRecipes(lastKey ?? undefined);
-    console.log("✅ data.items length:", data);
     setRecipes((prev) => [...prev, ...data.items]);
     setLastKey(data.lastKey ?? null);
     setHasMore(Boolean(data.lastKey));

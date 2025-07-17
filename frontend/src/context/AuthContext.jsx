@@ -62,25 +62,15 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("idToken", data.id_token);
 
         // שליחת הטוקן ל־Lambda
-        try {
-          const lambdaResponse = await fetch("https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/fetch-user", {
+         const res = await fetch("https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${data.id_token}`
-            },
-            body: JSON.stringify({ source: "cognito-login" })
-          });
-
-          if (!lambdaResponse.ok) {
-            console.warn("Lambda error, using token only");
-            console.warn("⚠️ Lambda error:", status, text); // 👈 זה יגיד לנו למה!
-
-          }
-
-        } catch (err) {
-          console.error("Lambda call failed:", err);
-        }
+            }
+          })
+          const json = await res.json();
+          console.log("Lambda response JSON:", json);
 
         // הגדרת המשתמש
         setUser({

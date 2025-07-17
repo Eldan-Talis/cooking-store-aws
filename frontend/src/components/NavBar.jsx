@@ -8,10 +8,6 @@ import { useAuth } from "../context/AuthContext";
 export default function Navbar() {
   const { user, login, logout } = useAuth();
 
-  // 🔍 Debug: See what the user context actually contains
-  useEffect(() => {
-    console.log("Navbar user:", user);
-  }, [user]);
 
   return (
     <AppBar position="static" color="default" elevation={2}>
