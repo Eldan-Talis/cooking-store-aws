@@ -7,7 +7,7 @@ export interface PaginatedRecipes {
 }
 
 export async function getRecipes( lastKey?: string): Promise<PaginatedRecipes> {
-  const url = new URL("https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/get-recipes");
+  const url = new URL("https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Recipes");
 
   if (lastKey) {
     url.searchParams.append("lastKey", lastKey);
@@ -18,5 +18,6 @@ export async function getRecipes( lastKey?: string): Promise<PaginatedRecipes> {
     throw new Error("Failed to fetch recipes");
   }
 
-  return await response.json(); // returns: { items: Recipe[], lastKey: string | null }
+  const raw = await response.json();
+  return JSON.parse(raw.body); // manually parse the stringified array
 }
