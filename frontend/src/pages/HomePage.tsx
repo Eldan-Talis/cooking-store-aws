@@ -68,8 +68,14 @@ export default function HomePage() {
       return;
     }
     getFavorites()
-      .then(arr => setFavorites(new Set(arr.map(String))))
-      .catch(() => setFavorites(new Set()));
+      .then((recipes) =>
+      {
+        console.log("Fetched favorites:", recipes)
+      // recipes: Recipe[]  →  Set<string>
+      setFavorites(new Set(recipes.map((r) => String(r.Id))))
+      }
+    )
+    .catch(() => setFavorites(new Set()));
   }, [user]);
 
   /* ───────────────── derived data ────────────── */

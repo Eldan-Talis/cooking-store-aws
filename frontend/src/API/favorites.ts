@@ -15,9 +15,12 @@ export async function addFavorite(recipeId: string) {
     throw new Error(err.message || "Failed to favorite recipe");
   }
 }
-export async function getFavorites(): Promise<string[]> {
+import { Recipe } from "../API/types";
+
+/** Returns the full favourite recipes for the logged-in user. */
+export async function getFavorites(): Promise<Recipe[]> {
   const token = localStorage.getItem("idToken");
-  if (!token) return [];                     // not logged-in
+  if (!token) return [];                                   // user signed-out
 
   const res = await fetch(
     "https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites",
@@ -25,27 +28,13 @@ export async function getFavorites(): Promise<string[]> {
   );
 
   if (!res.ok) {
-    // propagate a meaningful error message
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch favorites");
+    throw new Error(err.message || "Failed to fetch favourites");
   }
 
-  /* ---------- parse & normalise ---------- */
-  const payload = await res.json();          // parse once
-
-  // 1) if the backend already returns string[], we're done
-  if (Array.isArray(payload) && typeof payload[0] === "string") {
-    return payload as string[];
-  }
-
-  // 2) otherwise assume array of objects → extract / stringify Id
-  const ids = (Array.isArray(payload) ? payload : [])
-    .map((item: any) => item?.Id ?? item?.recipe_id ?? item?.RecipeID)
-    .filter(Boolean)                         // drop null / undefined
-    .map(String);                            // ensure they’re strings
-
-  return ids;
+  return res.json();               // read body once  
 }
+
 export async function removeFavorite(recipeId: string) {
   const token = localStorage.getItem("idToken"); // or however you store it
 

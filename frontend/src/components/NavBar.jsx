@@ -23,7 +23,6 @@ export default function Navbar() {
         <Box display="flex" gap={2}>
           <Button component={RouterLink} to="/" color="inherit">Home</Button>
           <Button component={RouterLink} to="/favorites" color="inherit">Favorites</Button>
-          <Button component={RouterLink} to="/recipes" color="inherit">Recipes</Button>
           <Button component={RouterLink} to="/chat" color="inherit">Chat Bot</Button>
         </Box>
 
