@@ -49,12 +49,13 @@ export async function getFavorites(): Promise<string[]> {
 export async function removeFavorite(recipeId: string) {
   const token = localStorage.getItem("idToken"); // or however you store it
 
-  const res = await fetch(`https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites/${recipeId}`, {
+  const res = await fetch(`https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
+    body: JSON.stringify({ recipeId: recipeId })
   });
 
   if (!res.ok) {
