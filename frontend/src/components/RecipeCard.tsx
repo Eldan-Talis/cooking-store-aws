@@ -80,7 +80,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       setUserRating(recipe.MyRating);
     } else if (user && recipe.Id) {
       fetch(
-        `https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/recipes/${recipe.Id}/my-rating?userId=${user.sub}`,
+        `https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Recipes/${recipe.Id}/Rating`,
         { headers: { Authorization: `Bearer ${user.idToken}` } }
       )
         .then((r) => r.json())
@@ -101,8 +101,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
     setUserRating(newRating);
 
     try {
+      console.log(user.idToken)
       const res = await fetch(
-        `https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/recipes/${recipe.Id}/rating`,
+        `https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Recipes/${recipe.Id}/Rating`,
         {
           method: "PUT",
           headers: {
