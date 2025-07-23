@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           idToken: data.id_token,
           sub: decoded.sub,
           email: decoded.email,
-          username: decoded.email?.split("@")[0] || "User",
+          username: decoded.username,
         });
 
         // Clean URL

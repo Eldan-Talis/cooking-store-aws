@@ -5,6 +5,7 @@ import HomePage from "./pages/HomePage";
 import FavoritesPage from "./pages/FavoritesPage";
 import RecipesPage from "./pages/MyRecipesPage";
 import ChatBotPage from "./pages/ChatBotPage";
+import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./context/AuthContext"; // הנתיב בהתאם למיקום שלך
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/recipes" element={<RecipesPage />} />
         <Route path="/chat" element={<ChatBotPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </AuthProvider>
     </>

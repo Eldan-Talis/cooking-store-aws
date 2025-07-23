@@ -9,6 +9,11 @@ import {
   Collapse,
   IconButton,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -17,6 +22,7 @@ import { useAuth } from "../context/AuthContext";
 import { Recipe } from "../API/types";
 import ReactStars from "react-stars";
 import ReviewsModal from "./ReviewsModal";
+import { addToFavorites } from "../API/getRecipes";
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -41,12 +47,14 @@ const ExpandMore = styled((props: ExpandMoreProps) => {
 
 export const RecipeCard = ({ recipe }: RecipeCardProps) => {
   const { user } = useAuth();
-  const [expanded, setExpanded] = useState(false);
   const [userRating, setUserRating] = useState<number>(0);
   const [averageRating, setAverageRating] = useState<number>(
     recipe.AverageRating ?? 0
   );
   const [showReviews, setShowReviews] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isAddingToFavorites, setIsAddingToFavorites] = useState(false);
 
   const API_BASE = "https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev";
 
@@ -72,7 +80,24 @@ export const RecipeCard = ({ recipe }: RecipeCardProps) => {
     setAverageRating(recipe.AverageRating ?? 0);
   }, [recipe, user]);
 
-  const handleExpandClick = () => setExpanded((prev) => !prev);
+  const handleAddToFavorites = async () => {
+    if (!user) {
+      alert("You must be logged in to add recipes to favorites!");
+      return;
+    }
+
+    setIsAddingToFavorites(true);
+    try {
+      await addToFavorites(recipe.Id, user.idToken);
+      setIsFavorite(true);
+      alert("Recipe added to favorites!");
+    } catch (error) {
+      console.error("Failed to add to favorites:", error);
+      alert("Failed to add recipe to favorites. Please try again.");
+    } finally {
+      setIsAddingToFavorites(false);
+    }
+  };
 
   const handleRate = async (newRating: number) => {
     if (!user) {
@@ -120,11 +145,7 @@ export const RecipeCard = ({ recipe }: RecipeCardProps) => {
       }}
     >
       <CardHeader
-        action={
-          <IconButton>
-            <MoreVertIcon />
-          </IconButton>
-        }
+        
         title={
           <Typography
             variant="subtitle1"
@@ -185,7 +206,12 @@ export const RecipeCard = ({ recipe }: RecipeCardProps) => {
       </CardContent>
 
       <CardActions disableSpacing>
-        <IconButton aria-label="add to favorites">
+        <IconButton 
+          aria-label="add to favorites"
+          onClick={handleAddToFavorites}
+          disabled={isAddingToFavorites}
+          color={isFavorite ? "error" : "default"}
+        >
           <FavoriteIcon />
         </IconButton>
         <IconButton
@@ -196,22 +222,38 @@ export const RecipeCard = ({ recipe }: RecipeCardProps) => {
           {/* or use an actual icon like <CommentIcon /> if using MUI Icons */}
         </IconButton>
 
-        <ExpandMore
-          expand={expanded}
-          onClick={handleExpandClick}
-          aria-expanded={expanded}
-          aria-label="show more"
+        <IconButton
+          aria-label="show description"
+          onClick={() => setShowDescription(true)}
         >
           <ExpandMoreIcon />
-        </ExpandMore>
+        </IconButton>
       </CardActions>
 
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <CardContent>
-          <Typography paragraph>Description:</Typography>
-          <Typography paragraph>{recipe.InstructionsText}</Typography>
-        </CardContent>
-      </Collapse>
+      {/* Description Modal */}
+      <Dialog
+        open={showDescription}
+        onClose={() => setShowDescription(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {recipe.Title}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="h6" gutterBottom>
+            Description
+          </Typography>
+          <Typography paragraph>
+            {recipe.InstructionsText}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDescription(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
       <ReviewsModal
         open={showReviews}
         onClose={() => setShowReviews(false)}

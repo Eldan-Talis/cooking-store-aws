@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getRecipes } from "../API/getRecipes";
+import { getRecipes, getRecipeCountsByCategory } from "../API/getRecipes";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
 import { getCategories } from "../API/getCategories";
@@ -14,6 +14,7 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -42,17 +43,25 @@ export default function HomePage() {
     getCategories()
       .then(setCategories)
       .catch((err) => setError(err.message));
+    
+    // Fetch total recipe counts by category
+    getRecipeCountsByCategory()
+      .then(setCategoryCounts)
+      .catch((err) => {
+        console.error("Failed to fetch category counts:", err);
+        // Fallback to calculating from loaded recipes
+        const counts = recipes.reduce((acc, recipe) => {
+          const category = recipe.CategoryId || "all";
+          acc[category] = (acc[category] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        setCategoryCounts(counts);
+      });
   }, []);
 
   const filteredRecipes = selectedCategory
     ? recipes.filter((r) => r.CategoryId === selectedCategory)
     : recipes;
-
-  const countsByCategory = recipes.reduce((acc, recipe) => {
-    const category = recipe.CategoryId || "all";
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
 
   return (
     <Box sx={{ padding: 4 }}>
@@ -64,7 +73,7 @@ export default function HomePage() {
         categories={categories}
         selectedCategoryId={selectedCategory}
         onSelectCategory={setSelectedCategory}
-        categoryCounts={countsByCategory}
+        categoryCounts={categoryCounts}
       />
 
       {error && (

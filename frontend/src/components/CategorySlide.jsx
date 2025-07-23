@@ -78,7 +78,7 @@ export default function CategorySelectMUI({
           variant="caption"
           sx={{ mt: 1, fontWeight: 500, color: theme.palette.text.primary }}
         >
-          {cat.name}
+          {cat.Name}
         </Typography>
       </Box>
     );
