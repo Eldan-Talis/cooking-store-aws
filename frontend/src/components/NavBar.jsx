@@ -21,9 +21,12 @@ export default function Navbar() {
 
         {/* Center: Nav links */}
         <Box display="flex" gap={2}>
-          <Button component={RouterLink} to="/" color="inherit">Home</Button>
-          <Button component={RouterLink} to="/favorites" color="inherit">Favorites</Button>
-          <Button component={RouterLink} to="/chat" color="inherit">Chat Bot</Button>
+          <Button component={RouterLink} to="/" sx={{ color: "#1976d2", fontWeight: 600, px: 2, borderRadius: 2, background: "transparent", '&:hover': { background: "#e3f2fd" } }}>Home</Button>
+          <Button component={RouterLink} to="/favorites" sx={{ color: "#1976d2", fontWeight: 600, px: 2, borderRadius: 2, background: "transparent", '&:hover': { background: "#e3f2fd" } }}>Favorites</Button>
+          {user && (
+            <Button component={RouterLink} to="/my-recipes" sx={{ color: "#1976d2", fontWeight: 600, px: 2, borderRadius: 2, background: "transparent", '&:hover': { background: "#e3f2fd" } }}>My Recipes</Button>
+          )}
+          <Button component={RouterLink} to="/chat" sx={{ color: "#1976d2", fontWeight: 600, px: 2, borderRadius: 2, background: "transparent", '&:hover': { background: "#e3f2fd" } }}>Chat Bot</Button>
         </Box>
 
         {/* Right: User info or login */}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getRecipes, createRecipe } from "../API/getRecipes";
+import { getUserRecipes, createRecipe, getRecipes, deleteRecipe } from "../API/getRecipes";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
 import { useAuth } from "../context/AuthContext";
@@ -21,17 +21,22 @@ import {
   CircularProgress,
   Alert,
   IconButton,
+  Paper,
 } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
+import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 
 export default function MyRecipesPage() {
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [error, setError] = useState("");
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [creatingRecipe, setCreatingRecipe] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deletingRecipe, setDeletingRecipe] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
   
   // Form state for new recipe
   const [newRecipe, setNewRecipe] = useState({
@@ -50,22 +55,56 @@ export default function MyRecipesPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      try {
-        // Fetch recipes created by the current user
-        const recipesData = await getRecipes();
-        const userRecipes = recipesData.items.filter(recipe => 
-          recipe.CreatedByUserId === user?.sub
-        );
-        setRecipes(userRecipes);
-
-        // Fetch categories for the form
-        const categoriesData = await getCategories();
-        setCategories(categoriesData);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      
+      // Fetch user's recipes directly from the API
+      if (user?.sub && user?.idToken) {
+        try {
+          console.log("Fetching user recipes...");
+          const userRecipes = await getUserRecipes(user.sub, user.idToken);
+          console.log("User recipes received:", userRecipes);
+          setRecipes(userRecipes);
+        } catch (recipesError: any) {
+          console.error("Error fetching user recipes:", recipesError);
+          
+          // If it's the specific "endpoint not found" error, use fallback silently
+          if (recipesError.message.includes("endpoint not found")) {
+            console.log("Using fallback approach for user recipes...");
+          } else {
+            console.log("Trying fallback: fetch all recipes and filter by user...");
+          }
+          
+          // Fallback: fetch all recipes and filter by user
+          try {
+            const allRecipes = await getRecipes();
+            const userRecipes = allRecipes.items.filter(recipe => 
+              recipe.CreatedByUserId === user.sub
+            );
+            console.log("Fallback user recipes:", userRecipes);
+            setRecipes(userRecipes);
+          } catch (fallbackError: any) {
+            console.error("Fallback also failed:", fallbackError);
+            // Only show error if both approaches fail
+            setError(`Failed to load recipes: ${fallbackError.message}`);
+          }
+        }
       }
+
+      // Fetch categories for the form (separate from recipes)
+      console.log("Fetching categories...");
+      setCategoriesLoading(true);
+      try {
+        const categoriesData = await getCategories();
+        console.log("Categories received:", categoriesData);
+        setCategories(categoriesData);
+      } catch (categoriesError: any) {
+        console.error("Error fetching categories:", categoriesError);
+        // Don't set the main error for categories, just log it
+        // You could set a separate categories error state if needed
+      } finally {
+        setCategoriesLoading(false);
+      }
+      
+      setLoading(false);
     };
 
     if (user) {
@@ -79,7 +118,16 @@ export default function MyRecipesPage() {
     setCreatingRecipe(true);
     try {
       const recipeData = {
-        ...newRecipe,
+        Title: newRecipe.Title,
+        Summery: newRecipe.Summery,
+        InstructionsText: newRecipe.InstructionsText,
+        ImageUrl: newRecipe.ImageUrl || "",
+        CategoryId: newRecipe.CategoryId,
+        ReadyInMinutes: parseInt(newRecipe.ReadyInMinutes) || 0,
+        Servings: parseInt(newRecipe.Servings) || 1,
+        Vegetarian: newRecipe.Vegetarian === "true" ? "1" : "0",
+        Vegan: newRecipe.Vegan === "true" ? "1" : "0",
+        GlutenFree: newRecipe.GlutenFree === "true" ? "1" : "0",
         CreatedByUserId: user.sub,
         Publisher: user.username || user.email,
         SourceUrl: "",
@@ -116,6 +164,33 @@ export default function MyRecipesPage() {
     }));
   };
 
+  const handleDeleteClick = (recipe: Recipe) => {
+    setRecipeToDelete(recipe);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!recipeToDelete || !user?.idToken) return;
+
+    setDeletingRecipe(true);
+    try {
+      await deleteRecipe(recipeToDelete.Id, user.idToken, user.sub);
+      // Remove the recipe from the local state
+      setRecipes(prev => prev.filter(recipe => recipe.Id !== recipeToDelete.Id));
+      setOpenDeleteDialog(false);
+      setRecipeToDelete(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDeletingRecipe(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setOpenDeleteDialog(false);
+    setRecipeToDelete(null);
+  };
+
   if (!user) {
     return (
       <Box sx={{ padding: 4, textAlign: "center" }}>
@@ -128,10 +203,20 @@ export default function MyRecipesPage() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" component="h1">
-          My Recipes
-        </Typography>
+      <Typography
+        variant="h3"
+        align="center"
+        sx={{
+          color: "#1976d2",
+          fontWeight: 800,
+          letterSpacing: 1,
+          textShadow: "0 2px 8px rgba(25,118,210,0.10)",
+          mb: 4,
+        }}
+      >
+        My Recipes
+      </Typography>
+      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={4}>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -176,12 +261,28 @@ export default function MyRecipesPage() {
           mt={3}
         >
           {recipes.map((recipe) => (
-            <Box key={recipe.Id}>
+            <Box key={recipe.Id} sx={{ position: "relative" }}>
               <RecipeCard
                 recipe={recipe}
                 isFav={false} // or your logic to determine if it's a favorite
                 onFavToggle={() => {}} // or your handler function
               />
+              <IconButton
+                onClick={() => handleDeleteClick(recipe)}
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 1)",
+                  },
+                }}
+                color="error"
+                size="small"
+              >
+                <DeleteIcon />
+              </IconButton>
             </Box>
           ))}
         </Box>
@@ -236,32 +337,28 @@ export default function MyRecipesPage() {
                   value={newRecipe.CategoryId}
                   onChange={(e) => handleInputChange("CategoryId", e.target.value)}
                   label="Category"
+                  disabled={categoriesLoading}
                 >
-                  {categories.map((category) => (
-                    <MenuItem key={category.Id} value={category.Id}>
-                      {category.Name}
-                    </MenuItem>
-                  ))}
+                  {categoriesLoading ? (
+                    <MenuItem disabled>Loading categories...</MenuItem>
+                  ) : categories.length === 0 ? (
+                    <MenuItem disabled>No categories available</MenuItem>
+                  ) : (
+                    categories.map((category) => (
+                      <MenuItem key={category.Id} value={category.Id}>
+                        {category.Name}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
+                {categories.length === 0 && !categoriesLoading && (
+                  <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                    Debug: Categories count: {categories.length}
+                  </Typography>
+                )}
               </FormControl>
-              <TextField
-                fullWidth
-                label="Ready In (minutes)"
-                type="number"
-                value={newRecipe.ReadyInMinutes}
-                onChange={(e) => handleInputChange("ReadyInMinutes", e.target.value)}
-                required
-              />
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                fullWidth
-                label="Servings"
-                type="number"
-                value={newRecipe.Servings}
-                onChange={(e) => handleInputChange("Servings", e.target.value)}
-                required
-              />
               <FormControl fullWidth>
                 <InputLabel>Dietary Options</InputLabel>
                 <Select
@@ -297,6 +394,34 @@ export default function MyRecipesPage() {
             disabled={creatingRecipe || !newRecipe.Title || !newRecipe.CategoryId}
           >
             {creatingRecipe ? <CircularProgress size={20} /> : "Create Recipe"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Recipe Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleDeleteCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete Recipe</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete "{recipeToDelete?.Title}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={deletingRecipe}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            disabled={deletingRecipe}
+          >
+            {deletingRecipe ? <CircularProgress size={20} /> : "Delete Recipe"}
           </Button>
         </DialogActions>
       </Dialog>

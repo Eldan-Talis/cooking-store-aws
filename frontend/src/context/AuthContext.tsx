@@ -39,21 +39,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
+    console.log("AuthContext - URL code:", code);
+
     // If no code, try to load token from localStorage
     if (!code) {
       const token = localStorage.getItem("idToken");
+      console.log("AuthContext - Token from localStorage:", token ? "exists" : "not found");
+      console.log("AuthContext - Token length:", token?.length);
+      
       if (token) {
         try {
           const decoded: any = jwtDecode(token);
+          console.log("AuthContext - Decoded token:", decoded);
           setUser({
             idToken: token,
             sub: decoded.sub,
             email: decoded.email,
             username: decoded.email?.split("@")[0] || "User",
           });
-        } catch {
+          console.log("AuthContext - User set successfully");
+        } catch (error) {
+          console.error("AuthContext - Error decoding token:", error);
           localStorage.removeItem("idToken");
         }
+      } else {
+        console.log("AuthContext - No token found in localStorage");
       }
       return;
     }

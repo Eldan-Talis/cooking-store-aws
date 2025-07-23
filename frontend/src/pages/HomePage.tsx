@@ -22,6 +22,10 @@ import { useAuth } from "../context/AuthContext";
 export default function HomePage() {
   /* ─────────────────── auth ─────────────────── */
   const { user } = useAuth();
+  
+  console.log("HomePage - Component render - user:", user);
+  console.log("HomePage - Component render - user?.idToken:", user?.idToken);
+  console.log("HomePage - Component render - user?.idToken?.length:", user?.idToken?.length);
 
   /* ────────────────── state ─────────────────── */
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -42,9 +46,9 @@ export default function HomePage() {
 
     try {
       const { items, lastKey: nextKey } = await getRecipes(lastKey ?? undefined);
-
+      
       setRecipes(prev => [...prev, ...items]);
-      setLastKey(nextKey);
+      setLastKey(nextKey || null);
       setHasMore(Boolean(nextKey)); // If nextKey exists, we have more pages
     } catch (err: any) {
       setError(err.message ?? "Failed to load recipes");
@@ -68,19 +72,38 @@ export default function HomePage() {
 
   /* ───────────────── favourites (once) ───────── */
   useEffect(() => {
-    if (!user) {
+    console.log("HomePage - Favorites useEffect triggered");
+    console.log("HomePage - User object:", user);
+    console.log("HomePage - User idToken:", user?.idToken);
+    console.log("HomePage - User idToken length:", user?.idToken?.length);
+    console.log("HomePage - User object type:", typeof user);
+    console.log("HomePage - User idToken type:", typeof user?.idToken);
+    
+    // More robust check - ensure user exists and has a valid token
+    if (!user || !user.idToken || typeof user.idToken !== 'string' || user.idToken.length === 0) {
+      console.log("HomePage - No user or no valid idToken, setting empty favorites");
+      console.log("HomePage - user is null/undefined:", user === null || user === undefined);
+      console.log("HomePage - user.idToken is null/undefined:", user?.idToken === null || user?.idToken === undefined);
       setFavorites(new Set());
       return;
     }
-    getFavoriteRecipes()
+    
+    console.log("HomePage - Calling getFavoriteRecipes with token");
+    getFavoriteRecipes(user.idToken)
       .then((recipes) => {
         console.log("Fetched favorites:", recipes)
         // recipes: Recipe[]  →  Set<string>
-        setFavorites(new Set(recipes.map((r) => String(r.Id))))
+        const favoriteIds = recipes.map((r) => String(r.Id));
+        console.log("Favorite IDs:", favoriteIds);
+        setFavorites(new Set(favoriteIds));
+        console.log("Favorites Set created with size:", favoriteIds.length);
       }
-      )
-      .catch(() => setFavorites(new Set()));
-  }, [user]);
+    )
+    .catch((error) => {
+      console.error("HomePage - Error fetching favorites:", error);
+      setFavorites(new Set());
+    });
+  }, [user?.idToken]); // Only depend on the token, not the entire user object
 
   /* ───────────────── derived data ────────────── */
   const filteredRecipes = selectedCategory
@@ -242,20 +265,24 @@ export default function HomePage() {
             gap={2}
             mt={3}
           >
-            {filteredRecipes.map(r => (
-              <RecipeCard
-                key={r.Id}
-                recipe={r}
-                isFav={favorites.has(String(r.Id))}
-                onFavToggle={(id, nowFav) => {
-                  setFavorites(prev => {
-                    const next = new Set(prev);
-                    nowFav ? next.add(String(id)) : next.delete(String(id));
-                    return next;
-                  });
-                }}
-              />
-            ))}
+            {filteredRecipes.map(r => {
+              const isFavorite = favorites.has(String(r.Id));
+              console.log(`Recipe ${r.Id} (${r.Title}) - isFav: ${isFavorite}, favorites Set size: ${favorites.size}`);
+              return (
+                <RecipeCard
+                  key={r.Id}
+                  recipe={r}
+                  isFav={isFavorite}
+                  onFavToggle={(id, nowFav) => {
+                    setFavorites(prev => {
+                      const next = new Set(prev);
+                      nowFav ? next.add(String(id)) : next.delete(String(id));
+                      return next;
+                    });
+                  }}
+                />
+              );
+            })}
           </Box>
         )}
         {/* load-more button */}

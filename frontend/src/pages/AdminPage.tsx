@@ -181,12 +181,19 @@ export default function AdminPage() {
 
   return (
     <Box sx={{ padding: 4, maxWidth: 1400, margin: "0 auto" }}>
-      <Box display="flex" alignItems="center" gap={2} mb={4}>
-        <AdminIcon sx={{ fontSize: 40, color: "primary.main" }} />
-        <Typography variant="h4" component="h1">
-          Admin Dashboard
-        </Typography>
-      </Box>
+      <Typography
+        variant="h3"
+        align="center"
+        sx={{
+          color: "#1976d2",
+          fontWeight: 800,
+          letterSpacing: 1,
+          textShadow: "0 2px 8px rgba(25,118,210,0.10)",
+          mb: 4,
+        }}
+      >
+        Admin Dashboard
+      </Typography>
 
       {/* Stats Cards */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>

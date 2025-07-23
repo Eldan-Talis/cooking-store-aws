@@ -65,8 +65,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
 
+  console.log(`RecipeCard ${recipe.Id} - isFav prop: ${isFav}, isFavorite state: ${isFavorite}`);
+
   /* keep favourite flag in sync if parent prop changes */
-  useEffect(() => setIsFavorite(isFav), [isFav]);
+  useEffect(() => {
+    console.log(`RecipeCard ${recipe.Id} - useEffect triggered, isFav: ${isFav}`);
+    setIsFavorite(isFav);
+  }, [isFav, recipe.Id]);
 
   /* ---------- toggle favourite ---------- */
   const toggleFavorite = async () => {
@@ -78,12 +83,15 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
     setSyncingFav(true);
 
     try {
-      nowFav ? await addToFavorites(recipe.Id) : await removeFavorite(recipe.Id);
-      onFavToggle(recipe.Id, nowFav);                   // inform parent
+      if (nowFav) await addToFavorites(recipe.Id, user.idToken);
+      else        await removeFavorite(recipe.Id, user.idToken);
+
+      /* inform parent so its favourites Set stays consistent */
+      onFavToggle(recipe.Id, nowFav);
     } catch (err) {
       console.error(err);
       alert("Could not update favourites – please try again.");
-      setIsFavorite(!nowFav);                          // rollback on error
+      setIsFavorite(!nowFav);          // rollback UI
     } finally {
       setSyncingFav(false);
     }

@@ -71,7 +71,7 @@ export default function ProfilePage() {
       
       setLoading(true);
       try {
-        const recipes = await getFavoriteRecipes();
+        const recipes = await getFavoriteRecipes(user.idToken);
         setFavoriteRecipes(recipes);
         console.log(recipes);
         // Update preferences with top 3 cuisines
@@ -122,7 +122,17 @@ export default function ProfilePage() {
 
   return (
     <Box sx={{ padding: 4, maxWidth: 1200, margin: "0 auto" }}>
-      <Typography variant="h4" gutterBottom align="center" sx={{ mb: 4 }}>
+      <Typography
+        variant="h3"
+        align="center"
+        sx={{
+          color: "#1976d2",
+          fontWeight: 800,
+          letterSpacing: 1,
+          textShadow: "0 2px 8px rgba(25,118,210,0.10)",
+          mb: 4,
+        }}
+      >
         My Profile
       </Typography>
 
