@@ -119,11 +119,28 @@ export default function ReviewsModal({ open, onClose, recipeId }: Props) {
         ) : (
           reviews.map((r) => (
             <Box key={`${r.UserId}-${r.CreatedAt}`} sx={{ mb: 2 }}>
-              <strong>{r.Username}</strong>{" "}
-              <Typography component="span" color="text.secondary">
-                ({new Date(r.CreatedAt).toLocaleDateString()}):
-              </Typography>
-              <Typography>{r.ReviewText}</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box sx={{ flex: 1 }}>
+                  <strong>{r.Username}</strong>{" "}
+                  <Typography component="span" color="text.secondary">
+                    ({new Date(r.CreatedAt).toLocaleDateString()}):
+                  </Typography>
+                  <Typography>{r.ReviewText}</Typography>
+                </Box>
+                {user && r.UserId === user.sub && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      setMyReview(r);
+                      setText(r.ReviewText);
+                    }}
+                    sx={{ ml: 2, minWidth: 'auto' }}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </Box>
               <Divider sx={{ mt: 1 }} />
             </Box>
           ))
