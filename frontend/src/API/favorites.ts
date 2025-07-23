@@ -1,56 +1,71 @@
+// src/API/useFavoritesApi.ts
 import { Recipe } from "./types";
+import { useAuth } from "../context/AuthContext";
 
-const token = localStorage.getItem("idToken");
+const BASE =
+  "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites";
 
-export async function getFavoriteRecipes(): Promise<Recipe[]> {
-  const res = await fetch(
-    "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites",
-    {
-      method:  "GET",
-      headers: { Authorization: `Bearer ${token}` }
+/* ------------------------------------------------------------------ */
+/*  Option A → never return an empty header object                    */
+/* ------------------------------------------------------------------ */
+function authHeaders(idToken: string): HeadersInit {
+  return { Authorization: `Bearer ${idToken}` };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hook exposing favourites API                                      */
+/* ------------------------------------------------------------------ */
+export function useFavoritesApi() {
+  const { user } = useAuth();
+  const idToken = user?.idToken;
+
+  /** GET /Users/Favorites */
+  async function getFavoriteRecipes(): Promise<Recipe[]> {
+    if (!idToken) throw new Error("Not authenticated");
+    const res = await fetch(BASE, { headers: authHeaders(idToken) });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to fetch favorites");
     }
-  );
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Failed to fetch favorites");
+    return res.json();
   }
 
-  // `await res.json()` is *already* your Recipe[] directly
-  const data = await res.json();
-  return data as Recipe[];
-}
+  /** POST /Users/Favorites */
+  async function addToFavorites(recipeId: string): Promise<void> {
+    if (!idToken) throw new Error("Not authenticated");
+    const res = await fetch(BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(idToken),
+      },
+      body: JSON.stringify({ RecipeId: recipeId }),
+    });
 
-export async function addToFavorites(recipeId: string): Promise<void> {
-  const url = "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites";
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({ RecipeId: recipeId })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to add recipe to favorites');
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to add favorite");
+    }
   }
-}
 
-export async function removeFavorite(recipeId: string) {
+  /** DELETE /Users/Favorites */
+  async function removeFavorite(recipeId: string): Promise<void> {
+    if (!idToken) throw new Error("Not authenticated");
+    const res = await fetch(BASE, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(idToken),
+      },
+      body: JSON.stringify({ RecipeId: recipeId }),
+    });
 
-  const res = await fetch(`https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({ RecipeId: recipeId })
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "Failed to unfavorite recipe");
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to remove favorite");
+    }
   }
+
+  return { getFavoriteRecipes, addToFavorites, removeFavorite };
 }

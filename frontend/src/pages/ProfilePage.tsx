@@ -29,11 +29,12 @@ import {
   Settings as SettingsIcon
 } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
-import { getFavoriteRecipes } from "../API/favorites";
+import { useFavoritesApi } from "../API/favorites";
 import { Recipe } from "../API/types";
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const { getFavoriteRecipes } = useFavoritesApi();
   const [isEditing, setIsEditing] = useState(false);
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
