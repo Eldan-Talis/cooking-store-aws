@@ -1,3 +1,4 @@
+// src/pages/FavoritesPage.tsx
 import React, { useEffect, useState } from "react";
 import { getFavoriteRecipes } from "../API/getRecipes";
 import { Recipe } from "../API/types";
