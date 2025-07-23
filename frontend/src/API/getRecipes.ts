@@ -6,21 +6,22 @@ export interface PaginatedRecipes {
   lastKey: string | null;
 }
 
-export async function getRecipes( lastKey?: string): Promise<PaginatedRecipes> {
-  const url = new URL("https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Recipes");
-
-  if (lastKey) {
-    url.searchParams.append("lastKey", lastKey);
-  }
+export async function getRecipes(lastKey?: string): Promise<PaginatedRecipes> {
+  const url = new URL(
+    "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Recipes"
+  );
+  if (lastKey) url.searchParams.append("lastKey", lastKey);
 
   const response = await fetch(url.toString());
   if (!response.ok) {
     throw new Error("Failed to fetch recipes");
   }
 
-  const raw = await response.json();
-  return JSON.parse(raw.body); // manually parse the stringified array
+  // payload format 2.0: response.json() === the array or object you returned
+  const data = await response.json() as PaginatedRecipes;
+  return data;
 }
+
 
 export async function getFavoriteRecipes(token: string): Promise<Recipe[]> {
   const res = await fetch(

@@ -20,7 +20,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { styled } from "@mui/material/styles";
-import ReactStars from "react-stars";
+import { Box } from "@mui/material";
 
 import { useAuth } from "../context/AuthContext";
 import { Recipe } from "../API/types";
@@ -165,36 +165,59 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
     }
   };
 
+  function stripHtml(html) {
+    return html.replace(/<[^>]+>/g, "");
+  }
+
   /* ─── UI ─────────────────────────────────────────────── */
   return (
-    <Card sx={{ maxWidth: 345, display: "flex", flexDirection: "column" }}>
-      <CardHeader
-        
-        title={
-          <Typography
-            variant="subtitle1"
-            sx={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              minHeight: 56,
-            }}
-          >
-            {recipe.Title}
-          </Typography>
-        }
-      />
-
+    <Card
+      sx={{
+        maxWidth: 360,
+        borderRadius: 4,
+        boxShadow: 4,
+        border: "1px solid #e3f2fd",
+        transition: "transform 0.2s, box-shadow 0.2s",
+        "&:hover": {
+          transform: "translateY(-6px) scale(1.02)",
+          boxShadow: 8,
+          borderColor: "#90caf9",
+        },
+        background: "#fff",
+        m: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <CardMedia
         component="img"
-        height="194"
+        height="200"
         image={recipe.ImageUrl || "/default.jpg"}
         alt={recipe.Title}
+        sx={{
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          objectFit: "cover",
+          background: "#f5f5f5",
+        }}
       />
-
-      <CardContent sx={{ minHeight: 72, flexGrow: 1 }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: "#1976d2",
+            mb: 1,
+            minHeight: 56,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {recipe.Title}
+        </Typography>
         <Typography
           variant="body2"
           color="text.secondary"
@@ -204,48 +227,40 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            mb: 1,
           }}
         >
-          {recipe.Summery}
+          {stripHtml(recipe.Summery)}
         </Typography>
-
-        <Typography variant="body2" sx={{ mt: 1, fontWeight: 500 }}>
-          ⭐ {averageRating.toFixed(1)} / 5
-        </Typography>
-
-        <ReactStars
-          count={5}
-          value={userRating}
-          onChange={handleRate}
-          size={24}
-          half={false}
-          color2="#ffd700"
-        />
+        {/* You can add more info here, e.g. time, servings, etc. */}
       </CardContent>
-
-      <CardActions disableSpacing>
-        <IconButton 
-          aria-label="add to favorites"
-          onClick={handleAddToFavorites}
-          disabled={isAddingToFavorites}
-          color={isFavorite ? "error" : "default"}
-        >
-          <FavoriteIcon />
-        </IconButton>
-
-        <IconButton onClick={() => setShowReviews(true)} aria-label="reviews">
-          🗨️
-        </IconButton>
-
-        <IconButton
-          aria-label="show description"
+      <CardActions disableSpacing sx={{ px: 2, pb: 1, justifyContent: "space-between" }}>
+        <Box>
+          <IconButton
+            aria-label="add to favorites"
+            onClick={handleAddToFavorites}
+            disabled={isAddingToFavorites}
+            color={isFavorite ? "error" : "default"}
+          >
+            <FavoriteIcon />
+          </IconButton>
+          <IconButton onClick={() => setShowReviews(true)} aria-label="reviews" color="primary">
+            🗨️
+          </IconButton>
+        </Box>
+        <Button
+          size="small"
           onClick={() => setShowDescription(true)}
+          sx={{
+            color: "#1976d2",
+            fontWeight: 600,
+            textTransform: "none",
+          }}
+          endIcon={<ExpandMoreIcon />}
         >
-          <ExpandMoreIcon />
-        </IconButton>
+          Details
+        </Button>
       </CardActions>
-
-      {/* Description Modal */}
       <Dialog
         open={showDescription}
         onClose={() => setShowDescription(false)}
@@ -260,7 +275,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             Description
           </Typography>
           <Typography paragraph>
-            {recipe.InstructionsText}
+            {stripHtml(recipe.InstructionsText)}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -269,11 +284,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-      <ReviewsModal
-        open={showReviews}
-        onClose={() => setShowReviews(false)}
-        recipeId={recipe.Id}
-      />
     </Card>
   );
 };

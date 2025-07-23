@@ -177,7 +177,11 @@ export default function MyRecipesPage() {
         >
           {recipes.map((recipe) => (
             <Box key={recipe.Id}>
-              <RecipeCard recipe={recipe} />
+              <RecipeCard
+                recipe={recipe}
+                isFav={false} // or your logic to determine if it's a favorite
+                onFavToggle={() => {}} // or your handler function
+              />
             </Box>
           ))}
         </Box>
