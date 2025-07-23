@@ -204,7 +204,17 @@ export default function HomePage() {
       </Paper>
       {/* Main content with padding */}
       <Box sx={{ p: 4 }}>
-        <Typography variant="h4" align="center" gutterBottom>
+        <Typography
+          variant="h3"
+          align="center"
+          sx={{
+            color: "#1976d2",
+            fontWeight: 800,
+            letterSpacing: 1,
+            textShadow: "0 2px 8px rgba(25,118,210,0.10)",
+            mb: 4,
+          }}
+        >
           Recipes
         </Typography>
         {/* category selector */}
