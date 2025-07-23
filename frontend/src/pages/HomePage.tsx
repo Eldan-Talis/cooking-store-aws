@@ -24,16 +24,16 @@ export default function HomePage() {
   const { user } = useAuth();
 
   /* ────────────────── state ─────────────────── */
-  const [recipes, setRecipes]         = useState<Recipe[]>([]);
-  const [favorites, setFavorites]     = useState<Set<string>>(new Set());
-  const [categories, setCategories]   = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelect] = useState<string | null>(null);
 
   const [lastKey, setLastKey] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
+  const [error, setError] = useState("");
 
   /* ───────────────── recipes (paged) ─────────── */
   const loadMore = async () => {
@@ -41,12 +41,11 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      const data = await getRecipes(lastKey ?? undefined);
-      console.log("API response:", data);
-      const items = Array.isArray(data) ? data : [];
+      const { items, lastKey: nextKey } = await getRecipes(lastKey ?? undefined);
+
       setRecipes(prev => [...prev, ...items]);
-      setLastKey(null);
-      setHasMore(false);
+      setLastKey(nextKey);
+      setHasMore(Boolean(nextKey)); // If nextKey exists, we have more pages
     } catch (err: any) {
       setError(err.message ?? "Failed to load recipes");
     } finally {
@@ -54,9 +53,10 @@ export default function HomePage() {
     }
   };
 
+
   useEffect(() => {
     loadMore();          // initial page
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ───────────────── categories ─────────────── */
@@ -73,14 +73,13 @@ export default function HomePage() {
       return;
     }
     getFavorites()
-      .then((recipes) =>
-      {
+      .then((recipes) => {
         console.log("Fetched favorites:", recipes)
-      // recipes: Recipe[]  →  Set<string>
-      setFavorites(new Set(recipes.map((r) => String(r.Id))))
+        // recipes: Recipe[]  →  Set<string>
+        setFavorites(new Set(recipes.map((r) => String(r.Id))))
       }
-    )
-    .catch(() => setFavorites(new Set()));
+      )
+      .catch(() => setFavorites(new Set()));
   }, [user]);
 
   /* ───────────────── derived data ────────────── */
@@ -128,7 +127,7 @@ export default function HomePage() {
           spacing={3}
           sx={{ position: "relative", zIndex: 1 }}
         >
-        
+
           <Typography
             variant="h2"
             sx={{
