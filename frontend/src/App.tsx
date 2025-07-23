@@ -13,9 +13,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 /* ─── small guard component ─── */
 function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
-  if (loading) return null;                     // or a spinner
   if (user?.groups?.includes("Admin")) return children;
 
   return <Navigate to="/" replace />;           // fallback

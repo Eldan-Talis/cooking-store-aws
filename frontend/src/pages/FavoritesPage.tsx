@@ -4,17 +4,21 @@ import {
   Box,
   Typography,
   CircularProgress,
-  Alert
+  Alert,
+  Paper
 } from "@mui/material";
 
-import { useFavoritesApi } from "../API/favorites";
+import { getFavoriteRecipes } from "../API/favorites";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
 import { useAuth } from "../context/AuthContext";
 
 const FavoritesPage: React.FC = () => {
   const { user } = useAuth();
-  const { getFavoriteRecipes } = useFavoritesApi();
+
+  console.log("FavoritesPage - Component render - user:", user);
+  console.log("FavoritesPage - Component render - user?.idToken:", user?.idToken);
+  console.log("FavoritesPage - Component render - user?.idToken?.length:", user?.idToken?.length);
 
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,17 +26,26 @@ const FavoritesPage: React.FC = () => {
 
   /* ─── fetch once per login ─── */
   useEffect(() => {
+    console.log("FavoritesPage - useEffect triggered");
+    console.log("FavoritesPage - user?.idToken:", user?.idToken);
+    console.log("FavoritesPage - user?.idToken?.length:", user?.idToken?.length);
+    
     const fetchFavorites = async () => {
-      if (!user?.idToken) return;
+      if (!user?.idToken) {
+        console.log("FavoritesPage - No user token, returning early");
+        return;
+      }
 
+      console.log("FavoritesPage - Calling getFavoriteRecipes with token");
       setLoading(true);
       setError("");
 
       try {
-        const recipes = await getFavoriteRecipes();
+        const recipes = await getFavoriteRecipes(user.idToken);
+        console.log("FavoritesPage - Fetched recipes:", recipes);
         setFavoriteRecipes(recipes);
       } catch (err: any) {
-        console.error("Error fetching favorites:", err);
+        console.error("FavoritesPage - Error fetching favorites:", err);
         setError(err.message ?? "Failed to fetch favorite recipes");
       } finally {
         setLoading(false);
@@ -75,7 +88,17 @@ const FavoritesPage: React.FC = () => {
   /* ─── main render ─── */
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" align="center" gutterBottom>
+      <Typography
+        variant="h3"
+        align="center"
+        sx={{
+          color: "#1976d2",
+          fontWeight: 800,
+          letterSpacing: 1,
+          textShadow: "0 2px 8px rgba(25,118,210,0.10)",
+          mb: 4,
+        }}
+      >
         My Favorite Recipes
       </Typography>
 

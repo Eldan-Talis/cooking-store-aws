@@ -1,16 +1,7 @@
-// src/components/Navbar.tsx
 import React from "react";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Avatar,
-  IconButton,
-  Box,
-} from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Avatar, IconButton, Box } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import MenuIcon from "@mui/icons-material/Menu";
+import MenuIcon from '@mui/icons-material/Menu';
 import ChefHat from "../assets/chef.png";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
@@ -42,7 +33,7 @@ export default function Navbar() {
           </Typography>
         </Box>
 
-        {/* Nav links */}
+        {/* Center: Nav links */}
         <Box display="flex" gap={2}>
           <Button component={RouterLink} to="/" color="inherit">Home</Button>
           <Button component={RouterLink} to="/favorites" color="inherit">Favorites</Button>
@@ -54,7 +45,7 @@ export default function Navbar() {
           )}
         </Box>
 
-        {/* Auth area */}
+        {/* Right: User info or login */}
         <Box display="flex" alignItems="center" gap={2}>
           {!user ? (
             <Button onClick={login} color="primary" variant="outlined">
@@ -62,12 +53,7 @@ export default function Navbar() {
             </Button>
           ) : (
             <>
-              <Button
-                component={RouterLink}
-                to="/profile"
-                color="inherit"
-                sx={{ textTransform: "none" }}
-              >
+              <Button component={RouterLink} to="/profile" color="inherit" sx={{ textTransform: "none" }}>
                 <Typography variant="body1" fontWeight="bold" mr={1}>
                   {user.username}
                 </Typography>
@@ -80,8 +66,6 @@ export default function Navbar() {
               </Button>
             </>
           )}
-
-          {/* hamburger for small screens */}
           <IconButton color="inherit" sx={{ display: { sm: "none" } }}>
             <MenuIcon />
           </IconButton>

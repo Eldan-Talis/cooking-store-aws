@@ -5,7 +5,7 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { jwtDecode, JwtPayload } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import cognitoConfig from "./CognitoConfig";
 
 /* ─────────── user shape ─────────── */
@@ -22,17 +22,17 @@ export interface AuthUser {
 /* ───────── context type ────────── */
 interface AuthContextType {
   user: AuthUser | null;
-  loading: boolean;
   login: () => void;
   logout: () => void;
 }
 
+// 👇 3️⃣ Create the context with proper type
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /* ───────── helper: build user ───────── */
 function buildUser(idTok: string, accTok?: string): AuthUser | null {
   try {
-    const id = jwtDecode<JwtPayload & Record<string, any>>(idTok);
+    const id = jwtDecode< Record<string, any>>(idTok);
 
     /* groups come from access-token */
     let groups: string[] | undefined;
@@ -65,93 +65,104 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// 👇 5️⃣ AuthProvider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      /* 1️⃣  hydrate from localStorage */
-      const storedId = localStorage.getItem("idToken");
-      const storedAcc = localStorage.getItem("accessToken");
-      if (storedId) {
-        const u = buildUser(storedId, storedAcc ?? undefined);
-        if (u) setUser(u);
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    console.log("AuthContext - URL code:", code);
+
+    // If no code, try to load token from localStorage
+    if (!code) {
+      const token = localStorage.getItem("idToken");
+      console.log("AuthContext - Token from localStorage:", token ? "exists" : "not found");
+      console.log("AuthContext - Token length:", token?.length);
+      
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          console.log("AuthContext - Decoded token:", decoded);
+          setUser({
+            idToken: token,
+            sub: decoded.sub,
+            email: decoded.email,
+            username: decoded.email?.split("@")[0] || "User",
+          });
+          console.log("AuthContext - User set successfully");
+        } catch (error) {
+          console.error("AuthContext - Error decoding token:", error);
+          localStorage.removeItem("idToken");
+        }
+      } else {
+        console.log("AuthContext - No token found in localStorage");
       }
+      return;
+    }
 
-      /* 2️⃣  handle ?code= after Cognito redirect */
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      if (!code) {
-        setLoading(false);
-        return;
-      }
-      if (sessionStorage.getItem("usedCognitoCode") === code) {
-        setLoading(false);
-        return;
-      }
-      sessionStorage.setItem("usedCognitoCode", code);
+    // If we have a new Cognito code, exchange it for tokens
+    const usedCode = sessionStorage.getItem("usedCognitoCode");
+    if (usedCode === code) return;
+    sessionStorage.setItem("usedCognitoCode", code);
 
-      try {
-        /* exchange code → tokens */
-        const creds = btoa(
-          `${cognitoConfig.clientId}:${cognitoConfig.clientSecret}`
-        );
+    const credentials = `${cognitoConfig.clientId}:${cognitoConfig.clientSecret}`;
+    const encodedCredentials = btoa(credentials); // base64 encode  
+    fetch(`https://${cognitoConfig.domain}/oauth2/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${encodedCredentials}`
+       },
+      body:
+        `grant_type=authorization_code` +
+        `&client_id=${cognitoConfig.clientId}` +
+        `&code=${code}` +
+        `&redirect_uri=${encodeURIComponent(cognitoConfig.redirectUri)}`,
+    })
+      .then((res) => res.json())
+      .then(async (data) => {
+        if (!data.id_token) {
+          console.error("No id_token returned from Cognito:", data);
+          return;
+        }
 
-        const res = await fetch(
-          `https://${cognitoConfig.domain}/oauth2/token`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: `Basic ${creds}`,
-            },
-            body:
-              `grant_type=authorization_code` +
-              `&client_id=${cognitoConfig.clientId}` +
-              `&code=${code}` +
-              `&redirect_uri=${encodeURIComponent(cognitoConfig.redirectUri)}`,
-          }
-        );
-
-        const data = await res.json();
-        if (!data.id_token) throw new Error("Missing id_token");
-
-        /* 3️⃣  store tokens */
+        const decoded: any = jwtDecode(data.id_token);
         localStorage.setItem("idToken", data.id_token);
-        localStorage.setItem("accessToken", data.access_token);
 
-        /* 4️⃣  create user object */
-        const fresh = buildUser(data.id_token, data.access_token);
-        if (fresh) setUser(fresh);
+        // Optionally: Call your Lambda if needed
+        try {
+          await fetch(
+            "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.id_token}`,
+              },
+              body: JSON.stringify({ source: "cognito-login" }),
+            }
+          );
+        } catch (err) {
+          console.error("Lambda call failed:", err);
+        }
 
-        /* 5️⃣  fire-and-forget Lambda */
-        fetch(
-          "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${data.id_token}`,
-            },
-            body: JSON.stringify({ source: "cognito-login" }),
-          }
-        ).catch(console.error);
+        // Set user
+        setUser({
+          idToken: data.id_token,
+          sub: decoded.sub,
+          email: decoded.email,
+          username: decoded.username,
+        });
 
-        /* 6️⃣  clean URL */
+        // Clean URL
         window.history.replaceState({}, "", "/");
-      } catch (err) {
-        console.error("Cognito exchange failed:", err);
-        localStorage.removeItem("idToken");
-        localStorage.removeItem("accessToken");
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
+      })
+      .catch((err) => {
+        console.error("Token exchange failed:", err);
+      });
   }, []);
 
-  /* ───────── helpers ───────── */
   const login = () => {
     const { domain, clientId, redirectUri, responseType, scope } = cognitoConfig;
     const authUrl =
@@ -169,15 +180,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-/* ───────── hook ───────── */
+// 👇 6️⃣ useAuth hook with safe context type
 export const useAuth = (): AuthContextType => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };
