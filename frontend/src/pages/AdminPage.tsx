@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import {
   Box,
   Card,
@@ -28,6 +29,7 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
 import { getUsersFromCognito, mapCognitoStatusToDisplay, getStatusColor, type CognitoUser } from "../API/getUsers";
+
 
 // Mock user data as fallback - in a real app, this would come from your backend
 const mockUsers = [
@@ -87,7 +89,8 @@ export default function AdminPage() {
   const [useCognitoData, setUseCognitoData] = useState(false);
 
   // Check if current user is admin (in real app, check user role from backend)
-  const isAdmin = user?.email === "jane@example.com";
+  /* Is current logged-in user in the Admin group? */
+  const isAdmin = user?.groups?.includes("Admin") ?? false;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -181,19 +184,12 @@ export default function AdminPage() {
 
   return (
     <Box sx={{ padding: 4, maxWidth: 1400, margin: "0 auto" }}>
-      <Typography
-        variant="h3"
-        align="center"
-        sx={{
-          color: "#1976d2",
-          fontWeight: 800,
-          letterSpacing: 1,
-          textShadow: "0 2px 8px rgba(25,118,210,0.10)",
-          mb: 4,
-        }}
-      >
-        Admin Dashboard
-      </Typography>
+      <Box display="flex" alignItems="center" gap={2} mb={4}>
+        <AdminIcon sx={{ fontSize: 40, color: "primary.main" }} />
+        <Typography variant="h4" component="h1">
+          Admin Dashboard
+        </Typography>
+      </Box>
 
       {/* Stats Cards */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>

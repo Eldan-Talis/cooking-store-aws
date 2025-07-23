@@ -1,4 +1,3 @@
-// src/components/ReviewsModal.tsx
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -9,15 +8,7 @@ import {
   Divider,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE } from "../API/config";
-
-/* ──────────── types ──────────── */
-export interface Review {
-  UserId: string;
-  Username: string;
-  ReviewText: string;
-  CreatedAt: string; // ISO-8601
-}
+import { Review, useReviewsApi } from "../API/useReviewsApi";
 
 interface Props {
   open: boolean;
@@ -25,21 +16,20 @@ interface Props {
   recipeId: string;
 }
 
-/* ─────────── component ────────── */
 export default function ReviewsModal({ open, onClose, recipeId }: Props) {
   const { user } = useAuth();
+  const { getReviews, createReview, updateReview } = useReviewsApi();
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [myReview, setMyReview] = useState<Review | null>(null);
   const [text, setText] = useState("");
 
-  /* ─── load reviews when opened ─── */
+  /* ─── load list ─── */
   useEffect(() => {
     if (!open) return;
 
-    fetch(`${API_BASE}/Recipes/${recipeId}/Review`)
-      .then((r) => r.json())
-      .then((data: Review[]) => {
+    getReviews(recipeId)
+      .then((data) => {
         setReviews(data);
         if (user) {
           const mine = data.find((r) => r.UserId === user.sub) ?? null;
@@ -47,48 +37,41 @@ export default function ReviewsModal({ open, onClose, recipeId }: Props) {
           setText(mine?.ReviewText ?? "");
         }
       })
-      .catch((err) => console.error("Failed to load reviews:", err));
-  }, [open, recipeId, user]);
+      .catch((err) => console.error(err));
+  }, [open, recipeId, user, getReviews]);
 
-  /* ─── create / edit review ─── */
+  /* ─── submit ─── */
   async function handleSubmit() {
-    if (!user || !text.trim()) return;
+    if (!text.trim()) return;
 
-    const method = myReview ? "PUT" : "POST";
-    const res = await fetch(
-      `${API_BASE}/Recipes/${recipeId}/Review`,
-      {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.idToken}`,
-        },
-        body: JSON.stringify({ ReviewText: text.trim() }),
+    try {
+      if (myReview) {
+        await updateReview(recipeId, text.trim());
+      } else {
+        await createReview(recipeId, text.trim());
       }
-    );
 
-    if (!res.ok) {
-      console.error(await res.text());
-      return;
+      const updated: Review = {
+        UserId: user!.sub,
+        Username: user!.username,
+        ReviewText: text.trim(),
+        CreatedAt: new Date().toISOString(),
+      };
+
+      setReviews((prev) =>
+        myReview
+          ? prev.map((r) => (r.UserId === user!.sub ? updated : r))
+          : [...prev, updated]
+      );
+      setMyReview(updated);
+      setText("");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to submit review");
     }
-
-    const updated: Review = {
-      UserId: user.sub,
-      Username: user.username ?? "anonymous",
-      ReviewText: text.trim(),
-      CreatedAt: new Date().toISOString(),
-    };
-
-    setReviews((prev) =>
-      method === "POST"
-        ? [...prev, updated]
-        : prev.map((r) => (r.UserId === user.sub ? updated : r))
-    );
-    setMyReview(updated);
-    setText("");
   }
 
-  /* ─── render ─── */
+  /* ─── UI ─── */
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -106,16 +89,12 @@ export default function ReviewsModal({ open, onClose, recipeId }: Props) {
           overflow: "auto",
         }}
       >
-        {/* title */}
         <Typography variant="h6" gutterBottom>
           Reviews
         </Typography>
 
-        {/* reviews list */}
         {reviews.length === 0 ? (
-          <Typography color="text.secondary" mb={2}>
-            No reviews yet.
-          </Typography>
+          <Typography color="text.secondary">No reviews yet.</Typography>
         ) : (
           reviews.map((r) => (
             <Box key={`${r.UserId}-${r.CreatedAt}`} sx={{ mb: 2 }}>
@@ -146,13 +125,8 @@ export default function ReviewsModal({ open, onClose, recipeId }: Props) {
           ))
         )}
 
-        {/* leave / edit review */}
         {user && (
           <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              {myReview ? "Edit your review" : "Leave a review"}
-            </Typography>
-
             <TextField
               fullWidth
               multiline
@@ -172,7 +146,6 @@ export default function ReviewsModal({ open, onClose, recipeId }: Props) {
           </Box>
         )}
 
-        {/* bottom-right CLOSE button */}
         <Box sx={{ mt: 4, textAlign: "right" }}>
           <Button onClick={onClose}>CLOSE</Button>
         </Box>
