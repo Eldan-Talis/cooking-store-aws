@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import {
   Box,
   Card,
@@ -28,6 +29,7 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
 import { getUsersFromCognito, mapCognitoStatusToDisplay, getStatusColor, type CognitoUser } from "../API/getUsers";
+
 
 // Mock user data as fallback - in a real app, this would come from your backend
 const mockUsers = [
@@ -87,7 +89,8 @@ export default function AdminPage() {
   const [useCognitoData, setUseCognitoData] = useState(false);
 
   // Check if current user is admin (in real app, check user role from backend)
-  const isAdmin = user?.email === "jane@example.com";
+  /* Is current logged-in user in the Admin group? */
+  const isAdmin = user?.groups?.includes("Admin") ?? false;
 
   useEffect(() => {
     const fetchUsers = async () => {

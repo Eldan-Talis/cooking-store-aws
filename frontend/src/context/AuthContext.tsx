@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -9,16 +8,18 @@ import React, {
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import cognitoConfig from "./CognitoConfig";
 
-/* ────────── user shape ────────── */
+/* ─────────── user shape ─────────── */
 export interface AuthUser {
   idToken: string;
+  accessToken?: string;
   sub: string;
   email?: string;
   username: string;
-  profileImage?: string; // from Cognito “picture” claim, optional
+  profileImage?: string;
+  groups?: string[];               // Admin, etc.
 }
 
-/* ───────── context type ───────── */
+/* ───────── context type ────────── */
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
@@ -28,20 +29,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/* ───────── helper to decode token ───────── */
-function decodeUser(token: string): AuthUser | null {
+/* ───────── helper: build user ───────── */
+function buildUser(idTok: string, accTok?: string): AuthUser | null {
   try {
-    const d = jwtDecode<JwtPayload & Record<string, any>>(token);
+    const id = jwtDecode<JwtPayload & Record<string, any>>(idTok);
+
+    /* groups come from access-token */
+    let groups: string[] | undefined;
+    if (accTok) {
+      const raw = jwtDecode<any>(accTok)["cognito:groups"];
+      if (Array.isArray(raw)) groups = raw;
+      else if (typeof raw === "string" && raw.trim() !== "") groups = [raw];
+    }
+
     return {
-      idToken: token,
-      sub: d.sub!,
-      email: d.email,
+      idToken: idTok,
+      accessToken: accTok,
+      sub: id.sub!,
+      email: id.email,
       username:
-        d["cognito:username"] ??
-        d.username ??
-        d.email?.split("@")[0] ??
+        id["cognito:username"] ??
+        id.username ??
+        id.email?.split("@")[0] ??
         "user",
-      profileImage: d.picture ?? undefined,
+      profileImage: id.picture,
+      groups,
     };
   } catch {
     return null;
@@ -58,23 +70,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function bootstrap() {
-      /* 1️⃣  hydrate from localStorage if present */
-      const stored = localStorage.getItem("idToken");
-      if (stored) {
-        const u = decodeUser(stored);
+    (async () => {
+      /* 1️⃣  hydrate from localStorage */
+      const storedId = localStorage.getItem("idToken");
+      const storedAcc = localStorage.getItem("accessToken");
+      if (storedId) {
+        const u = buildUser(storedId, storedAcc ?? undefined);
         if (u) setUser(u);
       }
 
-      /* 2️⃣  handle Cognito redirect with ?code= */
+      /* 2️⃣  handle ?code= after Cognito redirect */
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
       if (!code) {
         setLoading(false);
         return;
       }
-
-      /* avoid double-exchange in StrictMode / FastRefresh */
       if (sessionStorage.getItem("usedCognitoCode") === code) {
         setLoading(false);
         return;
@@ -82,10 +93,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       sessionStorage.setItem("usedCognitoCode", code);
 
       try {
-        /* 3️⃣  exchange code→tokens */
+        /* exchange code → tokens */
         const creds = btoa(
           `${cognitoConfig.clientId}:${cognitoConfig.clientSecret}`
         );
+
         const res = await fetch(
           `https://${cognitoConfig.domain}/oauth2/token`,
           {
@@ -105,12 +117,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data = await res.json();
         if (!data.id_token) throw new Error("Missing id_token");
 
-        /* 4️⃣  store and set user immediately */
+        /* 3️⃣  store tokens */
         localStorage.setItem("idToken", data.id_token);
-        const fresh = decodeUser(data.id_token);
+        localStorage.setItem("accessToken", data.access_token);
+
+        /* 4️⃣  create user object */
+        const fresh = buildUser(data.id_token, data.access_token);
         if (fresh) setUser(fresh);
 
-        /* 5️⃣  optional Lambda call (fire-and-forget) */
+        /* 5️⃣  fire-and-forget Lambda */
         fetch(
           "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users",
           {
@@ -123,18 +138,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         ).catch(console.error);
 
-        /* 6️⃣  remove ?code= from URL */
+        /* 6️⃣  clean URL */
         window.history.replaceState({}, "", "/");
       } catch (err) {
         console.error("Cognito exchange failed:", err);
         localStorage.removeItem("idToken");
+        localStorage.removeItem("accessToken");
         setUser(null);
       } finally {
         setLoading(false);
       }
-    }
-
-    bootstrap();
+    })();
   }, []);
 
   /* ───────── helpers ───────── */
@@ -144,7 +158,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       `https://${domain}/login?` +
       `client_id=${encodeURIComponent(clientId)}` +
       `&response_type=${encodeURIComponent(responseType)}` +
-      `&scope=${scope}`+
+      `&scope=${scope}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}`;
     window.location.href = authUrl;
   };
