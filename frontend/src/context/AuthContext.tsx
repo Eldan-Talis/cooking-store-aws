@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Optionally: Call your Lambda if needed
         try {
           await fetch(
-            "https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users",
+            "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users",
             {
               method: "POST",
               headers: {
