@@ -21,8 +21,7 @@ import { styled } from "@mui/material/styles";
 
 import { useAuth } from "../context/AuthContext";
 import { Recipe } from "../API/types";
-import { useFavoritesApi } from "../API/favorites";
-
+import { addToFavorites, removeFavorite } from "../API/favorites";
 import ReviewsModal from "./ReviewsModal";
 
 /* ───────────── props ───────────── */
@@ -59,7 +58,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   onFavToggle,
 }) => {
   const { user } = useAuth();
-  const { addToFavorites, removeFavorite } = useFavoritesApi();
 
   /* ---------- local state ---------- */
   const [isFavorite, setIsFavorite] = useState(isFav);
