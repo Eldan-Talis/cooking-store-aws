@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 
 import { getRecipes } from "../API/getRecipes";
-import { getFavorites } from "../API/favorites";
+import { getFavoriteRecipes } from "../API/favorites";
 import { getCategories } from "../API/getCategories";
 
 import { Recipe } from "../API/types";
@@ -72,7 +72,7 @@ export default function HomePage() {
       setFavorites(new Set());
       return;
     }
-    getFavorites()
+    getFavoriteRecipes()
       .then((recipes) => {
         console.log("Fetched favorites:", recipes)
         // recipes: Recipe[]  →  Set<string>

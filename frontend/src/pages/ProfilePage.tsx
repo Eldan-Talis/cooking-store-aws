@@ -29,7 +29,7 @@ import {
   Settings as SettingsIcon
 } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
-import { getFavoriteRecipes } from "../API/getRecipes";
+import { getFavoriteRecipes } from "../API/favorites";
 import { Recipe } from "../API/types";
 
 export default function ProfilePage() {
@@ -71,7 +71,7 @@ export default function ProfilePage() {
       
       setLoading(true);
       try {
-        const recipes = await getFavoriteRecipes(user.idToken);
+        const recipes = await getFavoriteRecipes();
         setFavoriteRecipes(recipes);
         console.log(recipes);
         // Update preferences with top 3 cuisines

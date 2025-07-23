@@ -1,41 +1,50 @@
 // src/pages/FavoritesPage.tsx
 import React, { useEffect, useState } from "react";
-import { getFavoriteRecipes } from "../API/getRecipes";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Alert
+} from "@mui/material";
+
+import { getFavoriteRecipes } from "../API/favorites";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
 import { useAuth } from "../context/AuthContext";
-import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 
-export default function FavoritesPage() {
+const FavoritesPage: React.FC = () => {
   const { user } = useAuth();
+
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError]   = useState("");
 
+  /* ─── fetch once per login ─── */
   useEffect(() => {
     const fetchFavorites = async () => {
-      if (!user?.sub) return;
+      if (!user?.idToken) return;
 
       setLoading(true);
       setError("");
-      
+
       try {
-        const recipes = await getFavoriteRecipes(user.idToken);
+        const recipes = await getFavoriteRecipes();
         setFavoriteRecipes(recipes);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch favorite recipes");
         console.error("Error fetching favorites:", err);
+        setError(err.message ?? "Failed to fetch favorite recipes");
       } finally {
         setLoading(false);
       }
     };
 
     fetchFavorites();
-  }, [user?.sub]);
+  }, [user?.idToken]);
 
+  /* ─── early guards ─── */
   if (!user) {
     return (
-      <Box sx={{ padding: 4, textAlign: "center" }}>
+      <Box sx={{ p: 4, textAlign: "center" }}>
         <Typography variant="h5" color="text.secondary">
           Please log in to view your favorites
         </Typography>
@@ -45,10 +54,10 @@ export default function FavoritesPage() {
 
   if (loading) {
     return (
-      <Box sx={{ padding: 4, textAlign: "center" }}>
+      <Box sx={{ p: 4, textAlign: "center" }}>
         <CircularProgress />
         <Typography variant="h6" sx={{ mt: 2 }}>
-          Loading your favorites...
+          Loading your favorites…
         </Typography>
       </Box>
     );
@@ -56,16 +65,15 @@ export default function FavoritesPage() {
 
   if (error) {
     return (
-      <Box sx={{ padding: 4 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+      <Box sx={{ p: 4 }}>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
 
+  /* ─── main render ─── */
   return (
-    <Box sx={{ padding: 4 }}>
+    <Box sx={{ p: 4 }}>
       <Typography variant="h4" align="center" gutterBottom>
         My Favorite Recipes
       </Typography>
@@ -80,20 +88,45 @@ export default function FavoritesPage() {
           </Typography>
         </Box>
       ) : (
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          justifyContent="center"
-          gap={2}
-          mt={3}
-        >
-          {favoriteRecipes.map((recipe) => (
-            <Box key={recipe.Id}>
-              <RecipeCard recipe={recipe} />
-            </Box>
-          ))}
+        /* outer flex to centre grid block */
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <Box
+            sx={{
+              display: "grid",
+              /*    xs → 1 col | sm → 2 cols | md+ → 3 cols    */
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
+              gap: 2,
+              /* keep rows equal-height so card bottoms align */
+              gridAutoRows: "1fr",
+              /* limit max width so only 3 cards fit, then centre */
+              width: "100%",
+              maxWidth: 1140, // 3×360px cards + ~ gaps
+            }}
+          >
+            {favoriteRecipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.Id}
+                recipe={recipe}
+                isFav={true}
+                onFavToggle={(id, nowFav) => {
+                  /* remove it locally if user unfavourites */
+                  if (!nowFav) {
+                    setFavoriteRecipes((prev) =>
+                      prev.filter((r) => r.Id !== id)
+                    );
+                  }
+                }}
+              />
+            ))}
+          </Box>
         </Box>
       )}
     </Box>
   );
-}
+};
+
+export default FavoritesPage;

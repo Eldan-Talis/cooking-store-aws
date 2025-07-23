@@ -1,50 +1,52 @@
-export async function addFavorite(recipeId: string) {
-  const token = localStorage.getItem("idToken"); // or however you store it
+import { Recipe } from "./types";
 
-  const res = await fetch("https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({ recipeId: recipeId }),
-  });
+const token = localStorage.getItem("idToken");
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "Failed to favorite recipe");
-  }
-}
-import { Recipe } from "../API/types";
-
-/** Returns the full favourite recipes for the logged-in user. */
-export async function getFavorites(): Promise<Recipe[]> {
-  const token = localStorage.getItem("idToken");
-  if (!token) return [];                                   // user signed-out
-
+export async function getFavoriteRecipes(): Promise<Recipe[]> {
   const res = await fetch(
-    "https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites",
-    { headers: { Authorization: `Bearer ${token}` } }
+    "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites",
+    {
+      method:  "GET",
+      headers: { Authorization: `Bearer ${token}` }
+    }
   );
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to fetch favourites");
+    const err = await res.json();
+    throw new Error(err.error || "Failed to fetch favorites");
   }
 
-  return res.json();               // read body once  
+  // `await res.json()` is *already* your Recipe[] directly
+  const data = await res.json();
+  return data as Recipe[];
+}
+
+export async function addToFavorites(recipeId: string): Promise<void> {
+  const url = "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites";
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ RecipeId: recipeId })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to add recipe to favorites');
+  }
 }
 
 export async function removeFavorite(recipeId: string) {
-  const token = localStorage.getItem("idToken"); // or however you store it
 
-  const res = await fetch(`https://f5xanmlhpc.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites`, {
+  const res = await fetch(`https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Users/Favorites`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify({ recipeId: recipeId })
+    body: JSON.stringify({ RecipeId: recipeId })
   });
 
   if (!res.ok) {
