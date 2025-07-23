@@ -1,8 +1,8 @@
 // src/cognitoConfig.js
 const cognitoConfig = {
-  domain: "us-east-10h3oc4brf.auth.us-east-1.amazoncognito.com",     // דומיין ה-Hosted UI
-  clientId: "5c091bcc21e5cm79qfdf4boik9",                // App client ID
-  clientSecret : "1ebjogkmv99o181c9v37r7uprslqvnas06lb7fc39dgga86jvv35", // App client secret
+  domain: "us-east-1ecygb8ebs.auth.us-east-1.amazoncognito.com",     // דומיין ה-Hosted UI
+  clientId: "4he7cfru5ndv29ismusc29emef",                // App client ID
+  clientSecret : "1k4i4m2rhs7pn1usqr605i65p0eo97o0h2kb98c7df98ijnnhq7m", // App client secret
   redirectUri: "http://localhost:5173/",                  // כתובת החזרה אחרי ההתחברות
   responseType: "code",                                  // Authorization Code
   scope: "openid+email+phone"                            // הרשאות נדרשות
