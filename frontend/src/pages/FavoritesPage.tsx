@@ -8,13 +8,14 @@ import {
   Paper
 } from "@mui/material";
 
-import { getFavoriteRecipes } from "../API/favorites";
+import { useFavoritesApi } from "../API/favorites";
 import { Recipe } from "../API/types";
 import { RecipeCard } from "../components/RecipeCard";
 import { useAuth } from "../context/AuthContext";
 
 const FavoritesPage: React.FC = () => {
   const { user } = useAuth();
+  const { getFavoriteRecipes } = useFavoritesApi();
 
   console.log("FavoritesPage - Component render - user:", user);
   console.log("FavoritesPage - Component render - user?.idToken:", user?.idToken);

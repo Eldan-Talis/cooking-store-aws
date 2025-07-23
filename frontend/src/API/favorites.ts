@@ -1,4 +1,6 @@
+// src/API/useFavoritesApi.ts
 import { Recipe } from "./types";
+import { useAuth } from "../context/AuthContext";
 
 export async function getFavoriteRecipes(idToken: string): Promise<Recipe[]> {
   // Early return if no token provided
@@ -46,10 +48,17 @@ export async function getFavoriteRecipes(idToken: string): Promise<Recipe[]> {
     throw new Error(err.error || err.message || "Failed to fetch favorites");
   }
 
-  // `await res.json()` is *already* your Recipe[] directly
-  const data = await res.json();
-  return data as Recipe[];
-}
+  /** POST /Users/Favorites */
+  async function addToFavorites(recipeId: string): Promise<void> {
+    if (!idToken) throw new Error("Not authenticated");
+    const res = await fetch(BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(idToken),
+      },
+      body: JSON.stringify({ RecipeId: recipeId }),
+    });
 
 export async function addToFavorites(recipeId: string, idToken: string): Promise<void> {
   // Early return if no token provided
@@ -79,7 +88,6 @@ export async function addToFavorites(recipeId: string, idToken: string): Promise
     console.error("Add to favorites API error:", errorData);
     throw new Error(errorData.error || 'Failed to add recipe to favorites');
   }
-}
 
 export async function removeFavorite(recipeId: string, idToken: string) {
   // Early return if no token provided
@@ -108,4 +116,6 @@ export async function removeFavorite(recipeId: string, idToken: string) {
     console.error("Remove from favorites API error:", err);
     throw new Error(err.message || "Failed to unfavorite recipe");
   }
+
+  return { getFavoriteRecipes, addToFavorites, removeFavorite };
 }

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 
 import { getRecipes } from "../API/getRecipes";
-import { getFavoriteRecipes } from "../API/favorites";
+import { useFavoritesApi } from "../API/favorites";
 import { getCategories } from "../API/getCategories";
 
 import { Recipe } from "../API/types";
