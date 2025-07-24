@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { jwtDecode } from "jwt-decode";
 import {
   Box,
@@ -28,106 +28,52 @@ import {
   AdminPanelSettings as AdminIcon
 } from "@mui/icons-material";
 import { useAuth } from "../context/AuthContext";
-import { getUsersFromCognito, mapCognitoStatusToDisplay, getStatusColor, type CognitoUser } from "../API/getUsers";
+import { getUsersFromDatabase, useDatabaseUsers, type DatabaseUser } from "../API/getUsers";
 
 
-// Mock user data as fallback - in a real app, this would come from your backend
-const mockUsers = [
-  {
-    id: "1",
-    username: "john_doe",
-    email: "john@example.com",
-    role: "user",
-    status: "active",
-    joinDate: "2024-01-15",
-    lastLogin: "2024-03-20",
-    recipesCount: 12,
-    favoritesCount: 8
-  },
-  {
-    id: "2",
-    username: "jane_smith",
-    email: "jane@example.com",
-    role: "admin",
-    status: "active",
-    joinDate: "2024-01-10",
-    lastLogin: "2024-03-21",
-    recipesCount: 25,
-    favoritesCount: 15
-  },
-  {
-    id: "3",
-    username: "mike_wilson",
-    email: "mike@example.com",
-    role: "user",
-    status: "inactive",
-    joinDate: "2024-02-01",
-    lastLogin: "2024-02-28",
-    recipesCount: 3,
-    favoritesCount: 2
-  },
-  {
-    id: "4",
-    username: "sarah_jones",
-    email: "sarah@example.com",
-    role: "user",
-    status: "active",
-    joinDate: "2024-03-01",
-    lastLogin: "2024-03-21",
-    recipesCount: 7,
-    favoritesCount: 12
-  }
-];
+
 
 export default function AdminPage() {
   const { user } = useAuth();
-  const [users, setUsers] = useState(mockUsers);
-  const [cognitoUsers, setCognitoUsers] = useState<CognitoUser[]>([]);
+  const { fetchUsers } = useDatabaseUsers();
+  const [users, setUsers] = useState<DatabaseUser[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [useCognitoData, setUseCognitoData] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<DatabaseUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Check if current user is admin (in real app, check user role from backend)
   /* Is current logged-in user in the Admin group? */
-  const isAdmin = user?.groups?.includes("Admin") ?? false;
+  const isAdmin = useMemo(() => {
+    console.log("Calculating isAdmin - user groups:", user?.groups);
+    return user?.groups?.includes("Admin") ?? false;
+  }, [user?.groups]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const loadUsers = async () => {
       setLoading(true);
+      setError(null);
       try {
-        // Try to fetch from Cognito first
-        const cognitoData = await getUsersFromCognito();
-        setCognitoUsers(cognitoData);
-        setUseCognitoData(true);
+        const databaseUsers = await fetchUsers();
+        setUsers(databaseUsers);
       } catch (error) {
-        console.log("Using mock data as fallback:", error);
-        setUseCognitoData(false);
+        console.error("Failed to fetch users:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch users");
+        setUsers([]); // No fallback - only real data
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers();
-  }, []);
+    if (user?.idToken) {
+      loadUsers();
+    }
+  }, [fetchUsers, user?.idToken]);
 
-  // Combine Cognito and mock data
-  const allUsers = useCognitoData ? cognitoUsers.map(cognitoUser => ({
-    id: cognitoUser.id,
-    username: cognitoUser.username,
-    email: cognitoUser.email,
-    role: cognitoUser.attributes.role || "user",
-    status: mapCognitoStatusToDisplay(cognitoUser.status),
-    joinDate: cognitoUser.userCreateDate.toLocaleDateString(),
-    lastLogin: cognitoUser.lastLoginDate?.toLocaleDateString() || "Never",
-    recipesCount: 0, // You would get this from your database
-    favoritesCount: 0 // You would get this from your database
-  })) : users;
-
-  const filteredUsers = allUsers.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(user =>
+    (user.username?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (user.role && user.role.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleViewUser = (user) => {
@@ -144,9 +90,7 @@ export default function AdminPage() {
     setUsers(users.filter(user => user.id !== userId));
   };
 
-  const getStatusColorLocal = (status) => {
-    return getStatusColor(status);
-  };
+
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -192,7 +136,7 @@ export default function AdminPage() {
       </Box>
 
       {/* Stats Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 3, mb: 4 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3, mb: 4 }}>
         <Card>
           <CardContent sx={{ textAlign: "center" }}>
             <Typography variant="h4" color="primary">
@@ -203,16 +147,7 @@ export default function AdminPage() {
             </Typography>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent sx={{ textAlign: "center" }}>
-            <Typography variant="h4" color="success.main">
-              {users.filter(u => u.status === "active").length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Active Users
-            </Typography>
-          </CardContent>
-        </Card>
+
         <Card>
           <CardContent sx={{ textAlign: "center" }}>
             <Typography variant="h4" color="error.main">
@@ -226,7 +161,7 @@ export default function AdminPage() {
         <Card>
           <CardContent sx={{ textAlign: "center" }}>
             <Typography variant="h4" color="warning.main">
-              {users.reduce((sum, user) => sum + user.recipesCount, 0)}
+              {users.reduce((sum, user) => sum + (user.recipesCount || 0), 0)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Total Recipes
@@ -234,6 +169,13 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </Box>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* Search and Actions */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -265,22 +207,27 @@ export default function AdminPage() {
             <Box display="flex" justifyContent="center" p={4}>
               <CircularProgress />
             </Box>
+          ) : users.length === 0 ? (
+            <Box display="flex" justifyContent="center" p={4}>
+              <Typography variant="h6" color="text.secondary">
+                {error ? "Failed to load users" : "No users found"}
+              </Typography>
+            </Box>
           ) : (
             <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
               <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Join Date</TableCell>
-                    <TableCell>Last Login</TableCell>
-                    <TableCell>Recipes</TableCell>
-                    <TableCell>Favorites</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
+                                  <TableHead>
+                    <TableRow>
+                      <TableCell>User</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Role</TableCell>
+                      <TableCell>Join Date</TableCell>
+                      <TableCell>Last Login</TableCell>
+                      <TableCell>Recipes</TableCell>
+                      <TableCell>Favorites</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
                 <TableBody>
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id} hover>
@@ -297,17 +244,10 @@ export default function AdminPage() {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.status}
-                          color={getStatusColorLocal(user.status)}
-                          size="small"
-                        />
-                      </TableCell>
                       <TableCell>{user.joinDate}</TableCell>
                       <TableCell>{user.lastLogin}</TableCell>
-                      <TableCell>{user.recipesCount}</TableCell>
-                      <TableCell>{user.favoritesCount}</TableCell>
+                      <TableCell>{user.recipesCount || 0}</TableCell>
+                      <TableCell>{user.favoritesCount || 0}</TableCell>
                       <TableCell>
                         <Box display="flex" gap={1}>
                           <IconButton

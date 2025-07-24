@@ -9,8 +9,6 @@ import {
   Chip, 
   Divider, 
   Button,
-  TextField,
-  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -19,9 +17,6 @@ import {
   CircularProgress
 } from "@mui/material";
 import {
-  Edit as EditIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
   Email as EmailIcon,
   Person as PersonIcon,
   Favorite as FavoriteIcon,
@@ -34,10 +29,9 @@ import { Recipe } from "../API/types";
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editedUser, setEditedUser] = useState({
+  const [userProfile, setUserProfile] = useState({
     username: user?.username || "",
     email: user?.email || "",
     bio: "Food enthusiast and recipe collector",
@@ -76,13 +70,13 @@ export default function ProfilePage() {
         console.log(recipes);
         // Update preferences with top 3 cuisines
         const topCuisines = calculateTopCuisines(recipes);
-        setEditedUser(prev => ({
+        setUserProfile(prev => ({
           ...prev,
           preferences: topCuisines.length > 0 ? topCuisines : ["No favorites yet"]
         }));
       } catch (error) {
         console.error("Failed to fetch favorite recipes:", error);
-        setEditedUser(prev => ({
+        setUserProfile(prev => ({
           ...prev,
           preferences: ["No favorites yet"]
         }));
@@ -94,21 +88,7 @@ export default function ProfilePage() {
     fetchFavoriteRecipes();
   },[]);
 
-  const handleSave = () => {
-    // Here you would typically save to backend
-    setIsEditing(false);
-  };
 
-  const handleCancel = () => {
-    setEditedUser({
-      username: user?.username || "",
-      email: user?.email || "",
-      bio: "Food enthusiast and recipe collector",
-      preferences: ["Italian", "Asian", "Vegetarian"],
-      joinDate: "January 2024"
-    });
-    setIsEditing(false);
-  };
 
   if (!user) {
     return (
@@ -155,56 +135,15 @@ export default function ProfilePage() {
                 <Box flex={1}>
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <Typography variant="h4" component="h1">
-                      {isEditing ? (
-                        <TextField
-                          value={editedUser.username}
-                          onChange={(e) => setEditedUser({
-                            ...editedUser,
-                            username: e.target.value
-                          })}
-                          variant="standard"
-                          size="medium"
-                        />
-                      ) : (
-                        user.username
-                      )}
+                      {user.username}
                     </Typography>
-                    {!isEditing ? (
-                      <IconButton onClick={() => setIsEditing(true)}>
-                        <EditIcon />
-                      </IconButton>
-                    ) : (
-                      <Box display="flex" gap={1}>
-                        <IconButton onClick={handleSave} color="primary">
-                          <SaveIcon />
-                        </IconButton>
-                        <IconButton onClick={handleCancel} color="error">
-                          <CancelIcon />
-                        </IconButton>
-                      </Box>
-                    )}
                   </Box>
                   <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                    Member since {editedUser.joinDate}
+                    Member since {userProfile.joinDate}
                   </Typography>
-                  {isEditing ? (
-                    <TextField
-                      value={editedUser.bio}
-                      onChange={(e) => setEditedUser({
-                        ...editedUser,
-                        bio: e.target.value
-                      })}
-                      multiline
-                      rows={2}
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                    />
-                  ) : (
-                    <Typography variant="body1">
-                      {editedUser.bio}
-                    </Typography>
-                  )}
+                  <Typography variant="body1">
+                    {userProfile.bio}
+                  </Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -259,7 +198,7 @@ export default function ProfilePage() {
                 </Box>
               ) : (
                 <Box display="flex" flexWrap="wrap" gap={1}>
-                  {editedUser.preferences.map((pref, index) => (
+                  {userProfile.preferences.map((pref, index) => (
                     <Chip
                       key={index}
                       label={pref}
