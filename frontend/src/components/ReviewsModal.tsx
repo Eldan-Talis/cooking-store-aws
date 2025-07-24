@@ -34,20 +34,31 @@ export default function ReviewsModal({ open, onClose, recipeId }: Props) {
         if (user) {
           const mine = data.find((r) => r.UserId === user.sub) ?? null;
           setMyReview(mine);
-          setText(mine?.ReviewText ?? "");
+          // Only set text if user doesn't have any text typed yet
+          if (!text.trim()) {
+            setText(mine?.ReviewText ?? "");
+          }
         }
       })
       .catch((err) => console.error(err));
-  }, [open, recipeId, user, getReviews]);
+  }, [open, recipeId, user?.sub]); // Removed getReviews and user, only depend on user.sub
 
   /* ─── submit ─── */
   async function handleSubmit() {
     if (!text.trim()) return;
+    
+    console.log("Submitting review...");
+    console.log("User:", user);
+    console.log("Recipe ID:", recipeId);
+    console.log("Text:", text.trim());
+    console.log("Is edit:", !!myReview);
 
     try {
       if (myReview) {
+        console.log("Updating existing review...");
         await updateReview(recipeId, text.trim());
       } else {
+        console.log("Creating new review...");
         await createReview(recipeId, text.trim());
       }
 

@@ -33,16 +33,26 @@ export function useReviewsApi() {
   /** POST new review */
   async function createReview(recipeId: string, text: string): Promise<void> {
     if (!idToken) throw new Error("Not authenticated");
-    await fetch(`https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Recipes/${recipeId}/Review`, {
+    
+    console.log("Creating review with token:", idToken ? "Token exists" : "No token");
+    console.log("Token length:", idToken?.length);
+    
+    const response = await fetch(`https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/Recipes/${recipeId}/Review`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...authHeaders(idToken),
       },
       body: JSON.stringify({ ReviewText: text }),
-    }).then((r) => {
-      if (!r.ok) throw new Error("Create review failed");
     });
+    
+    console.log("Create review response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Create review failed:", errorText);
+      throw new Error(`Create review failed: ${response.status} - ${errorText}`);
+    }
   }
 
   /** PUT edit review (only current user) */
