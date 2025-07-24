@@ -1,4 +1,4 @@
-const CHATBOT_API_URL = "https://qbk52rz2nl.execute-api.us-east-1.amazonaws.com/dev/chat";
+const CHATBOT_API_URL = "https://6atvdcxzgf.execute-api.us-east-1.amazonaws.com/dev/chat";
 
 export async function askChefBot(message: string): Promise<string> {
   const res = await fetch(CHATBOT_API_URL, {
