@@ -7,6 +7,7 @@ import HomePage     from "./pages/HomePage";
 import FavoritesPage from "./pages/FavoritesPage";
 import ChatBotPage  from "./pages/ChatBotPage";
 import ProfilePage  from "./pages/ProfilePage";
+import MyRecipesPage from "./pages/MyRecipesPage";
 import AdminPage    from "./pages/AdminPage";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -28,6 +29,7 @@ export default function App() {
       <Routes>
         <Route path="/"          element={<HomePage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/my-recipes" element={<MyRecipesPage />} />
         <Route path="/chat"      element={<ChatBotPage />} />
         <Route path="/profile"   element={<ProfilePage />} />
         <Route
