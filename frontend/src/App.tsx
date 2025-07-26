@@ -9,6 +9,7 @@ import ChatBotPage  from "./pages/ChatBotPage";
 import ProfilePage  from "./pages/ProfilePage";
 import MyRecipesPage from "./pages/MyRecipesPage";
 import AdminPage    from "./pages/AdminPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -71,6 +72,7 @@ export default function App() {
             </RequireAdmin>
           }
         />
+        <Route path="*"          element={<NotFoundPage />} />
       </Routes>
     </AuthProvider>
   );
