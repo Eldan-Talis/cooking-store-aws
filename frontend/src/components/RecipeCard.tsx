@@ -17,6 +17,7 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ReviewsIcon from '@mui/icons-material/Reviews';
 import { styled } from "@mui/material/styles";
 
 import { useAuth } from "../context/AuthContext";
@@ -156,7 +157,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               aria-label="reviews"
               color="primary"
             >
-              🗨️
+              <ReviewsIcon />
             </IconButton>
           </Box>
 

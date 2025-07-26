@@ -138,12 +138,6 @@ export default function ProfilePage() {
                       {user.username}
                     </Typography>
                   </Box>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                    Member since {userProfile.joinDate}
-                  </Typography>
-                  <Typography variant="body1">
-                    {userProfile.bio}
-                  </Typography>
                 </Box>
               </Box>
             </CardContent>

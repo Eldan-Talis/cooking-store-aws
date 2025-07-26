@@ -3,7 +3,7 @@ import { useCallback } from "react";
 
 export interface DatabaseUser {
   id: string;
-  username: string;
+  user_name: string;
   email: string;
   role?: string;
   status?: string;

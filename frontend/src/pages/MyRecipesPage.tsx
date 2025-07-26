@@ -261,7 +261,7 @@ export default function MyRecipesPage() {
           mt={3}
         >
           {recipes.map((recipe) => (
-            <Box key={recipe.Id} sx={{ position: "relative" }}>
+            <Box key={recipe.Id} sx={{ position: "relative", display: "inline-block" }}>
               <RecipeCard
                 recipe={recipe}
                 isFav={false} // or your logic to determine if it's a favorite

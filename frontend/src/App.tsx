@@ -14,11 +14,42 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 /* ─── small guard component ─── */
 function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  if (user?.groups?.includes("Admin")) return children;
+  // Show loading spinner while auth is initializing
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '50vh' 
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
-  return <Navigate to="/" replace />;           // fallback
+  // Only redirect if we're sure the user is not an admin
+  if (user && !user.groups?.includes("Admin")) {
+    return <Navigate to="/" replace />;
+  }
+
+  // If no user, show login message instead of redirecting
+  if (!user) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '50vh' 
+      }}>
+        <div>Please log in to access admin panel</div>
+      </div>
+    );
+  }
+
+  return children;
 }
 
 export default function App() {

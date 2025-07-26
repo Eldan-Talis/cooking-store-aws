@@ -71,7 +71,7 @@ export default function AdminPage() {
   }, [fetchUsers, user?.idToken]);
 
   const filteredUsers = users.filter(user =>
-    (user.username?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+    (user.user_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
     (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
     (user.role && user.role.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -148,26 +148,7 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent sx={{ textAlign: "center" }}>
-            <Typography variant="h4" color="error.main">
-              {users.filter(u => u.role === "admin").length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Administrators
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ textAlign: "center" }}>
-            <Typography variant="h4" color="warning.main">
-              {users.reduce((sum, user) => sum + (user.recipesCount || 0), 0)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Recipes
-            </Typography>
-          </CardContent>
-        </Card>
+       
       </Box>
 
       {/* Error Alert */}
@@ -192,9 +173,7 @@ export default function AdminPage() {
           }}
           sx={{ width: 300 }}
         />
-        <Button variant="contained" color="primary">
-          Add New User
-        </Button>
+       
       </Box>
 
       {/* Users Table */}
@@ -218,14 +197,9 @@ export default function AdminPage() {
               <Table stickyHeader>
                                   <TableHead>
                     <TableRow>
-                      <TableCell>User</TableCell>
+                      <TableCell>User Name</TableCell>
                       <TableCell>Email</TableCell>
-                      <TableCell>Role</TableCell>
-                      <TableCell>Join Date</TableCell>
-                      <TableCell>Last Login</TableCell>
-                      <TableCell>Recipes</TableCell>
-                      <TableCell>Favorites</TableCell>
-                      <TableCell>Actions</TableCell>
+                     
                     </TableRow>
                   </TableHead>
                 <TableBody>
@@ -233,46 +207,12 @@ export default function AdminPage() {
                     <TableRow key={user.id} hover>
                       <TableCell>
                         <Typography variant="body1" fontWeight="bold">
-                          {user.username}
+                          {user.user_name}
                         </Typography>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.role}
-                          color={getRoleColor(user.role)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>{user.joinDate}</TableCell>
-                      <TableCell>{user.lastLogin}</TableCell>
-                      <TableCell>{user.recipesCount || 0}</TableCell>
-                      <TableCell>{user.favoritesCount || 0}</TableCell>
-                      <TableCell>
-                        <Box display="flex" gap={1}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleViewUser(user)}
-                            color="primary"
-                          >
-                            <ViewIcon />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditUser(user)}
-                            color="primary"
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteUser(user.id)}
-                            color="error"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
+                    
+                  
                     </TableRow>
                   ))}
                 </TableBody>

@@ -22,6 +22,7 @@ export interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null;
+  isLoading: boolean;
   login: () => void;
   logout: () => void;
 }
@@ -67,6 +68,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     /* ------------ bootstrap on first render ------------ */
@@ -78,6 +80,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const u = buildUser(storedId, storedAcc ?? undefined);
         if (u) setUser(u);
       }
+      
+      // Mark loading as complete after initial hydration
+      setIsLoading(false);
 
       /* 2️⃣  handle Cognito redirect with ?code= */
       const params = new URLSearchParams(window.location.search);
@@ -163,11 +168,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("idToken");
+    localStorage.removeItem("accessToken");
     setUser(null);
+    setIsLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
