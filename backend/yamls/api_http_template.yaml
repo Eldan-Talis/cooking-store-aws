@@ -1,0 +1,318 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for HTTP API: cookify-api'
+Parameters:
+  EnvPrefix:
+    Type: String
+    Description: Environment prefix
+    MinLength: 1
+Resources:
+  CookifyApihttpapi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name:
+        Fn::Sub: ${EnvPrefix}cookify-api
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+        - '*'
+        AllowMethods:
+        - GET
+        - POST
+        - OPTIONS
+        - PUT
+        - DELETE
+        AllowHeaders:
+        - '*'
+  CookifyApiRecipesgetroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: GET /Recipes
+      Target:
+        Fn::Sub: integrations/${CookifyApiv5jcxrfintegration}
+  CookifyApiv5jcxrfintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-v5jcxrf/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiUsersgetroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: GET /Users
+      Target:
+        Fn::Sub: integrations/${CookifyApihjgzh4vintegration}
+  CookifyApihjgzh4vintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-hjgzh4v/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiUserspostroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: POST /Users
+      Target:
+        Fn::Sub: integrations/${CookifyApi50l3e46integration}
+  CookifyApi50l3e46integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-50l3e46/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiUsersUserIdGetroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: GET /Users/{user-id}
+      Target:
+        Fn::Sub: integrations/${CookifyApi50rflf6integration}
+  CookifyApi50rflf6integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-50rflf6/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiRecipespostroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: POST /Recipes
+      Target:
+        Fn::Sub: integrations/${CookifyApim38xhp6integration}
+  CookifyApim38xhp6integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-m38xhp6/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiRecipesRecipeidReviewpostroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: POST /Recipes/{recipeId}/Review
+      Target:
+        Fn::Sub: integrations/${CookifyApip2obv95integration}
+  CookifyApip2obv95integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-p2obv95/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiUsersFavoritesgetroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: GET /Users/Favorites
+      Target:
+        Fn::Sub: integrations/${CookifyApid2pdms1integration}
+  CookifyApid2pdms1integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-d2pdms1/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiUsersFavoritesdeleteroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: DELETE /Users/Favorites
+      Target:
+        Fn::Sub: integrations/${CookifyApikr6oottintegration}
+  CookifyApikr6oottintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-kr6oott/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiRecipesdeleteroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: DELETE /Recipes
+      Target:
+        Fn::Sub: integrations/${CookifyApifzemf5tintegration}
+  CookifyApifzemf5tintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-fzemf5t/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiUsersFavoritespostroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: POST /Users/Favorites
+      Target:
+        Fn::Sub: integrations/${CookifyApicwz7xp5integration}
+  CookifyApicwz7xp5integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-cwz7xp5/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiRecipesRecipeidReviewputroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: PUT /Recipes/{recipeId}/Review
+      Target:
+        Fn::Sub: integrations/${CookifyApi226eg7qintegration}
+  CookifyApi226eg7qintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-226eg7q/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiChatpostroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: POST /chat
+      Target:
+        Fn::Sub: integrations/${CookifyApin1w6zbnintegration}
+  CookifyApin1w6zbnintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-n1w6zbn/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiCategoriesgetroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: GET /Categories
+      Target:
+        Fn::Sub: integrations/${CookifyApio2gat9pintegration}
+  CookifyApio2gat9pintegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-o2gat9p/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApiRecipesRecipeidReviewgetroute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      RouteKey: GET /Recipes/{recipeId}/Review
+      Target:
+        Fn::Sub: integrations/${CookifyApichldnd7integration}
+  CookifyApichldnd7integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-chldnd7/invocations
+      PayloadFormatVersion: '2.0'
+      IntegrationMethod: POST
+      CredentialsArn:
+        Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+  CookifyApistage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId:
+        Ref: CookifyApihttpapi
+      StageName:
+        Fn::Sub: ${EnvPrefix}-20250726194539
+      AutoDeploy: true
+Outputs:
+  HttpApiEndpoint:
+    Description: Invoke URL
+    Value:
+      Fn::Sub: https://${CookifyApihttpapi}.execute-api.${AWS::Region}/${EnvPrefix}-20250726194539

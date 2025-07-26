@@ -1,0 +1,81 @@
+# ---------------------- Template Header ----------------------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for S3 buckets and policies
+
+# ---------------------- Parameters ----------------------
+Parameters:
+  EnvPrefix:
+    Type: String
+    Description: Prefix for naming buckets (e.g., dev, test, prod)
+    MinLength: 1
+
+# ---------------------- Resources ----------------------
+Resources:
+  DataUploadBucketCookifyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${EnvPrefix}-data-upload-bucket-cookify
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+  MyCookWebsiteCookifyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${EnvPrefix}-my-cook-website-cookify
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: NotFoundPage.tsx
+  MyCookWebsiteCookifyBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: MyCookWebsiteCookifyBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: Statement1
+          Effect: Allow
+          Principal: '*'
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: arn:aws:s3:::${EnvPrefix}-my-cook-website-cookify/*
+
+# ---------------------- Outputs ----------------------
+Outputs:
+  DataUploadBucketCookifyBucketName:
+    Description: Name of bucket data-upload-bucket-cookify
+    Value:
+      Ref: DataUploadBucketCookifyBucket
+  DataUploadBucketCookifyBucketArn:
+    Description: ARN of bucket data-upload-bucket-cookify
+    Value:
+      Fn::GetAtt:
+      - DataUploadBucketCookifyBucket
+      - Arn
+  MyCookWebsiteCookifyBucketName:
+    Description: Name of bucket my-cook-website-cookify
+    Value:
+      Ref: MyCookWebsiteCookifyBucket
+  MyCookWebsiteCookifyBucketArn:
+    Description: ARN of bucket my-cook-website-cookify
+    Value:
+      Fn::GetAtt:
+      - MyCookWebsiteCookifyBucket
+      - Arn
